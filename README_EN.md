@@ -4,7 +4,7 @@
  [![PyPI - Downloads](https://img.shields.io/pypi/dm/evdsts)](https://pypistats.org/packages/evdsts)
  [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/evdsts)](https://pypi.org/project/evdsts/)
  [![PyPI - Status](https://img.shields.io/pypi/status/evdsts)](https://pypi.org/project/evdsts/)
- [![GitHub - License](https://img.shields.io/github/license/syncoding/evdsts)](https://github.com/syncoding/evdsts/blob/master/LICENSE)
+ [![GitHub - License](https://img.shields.io/github/license/syncoding/evdsts)](https://github.com/syncoding/evdsts/blob/master/LICENSE.txt)
  [![GitHub issues](https://img.shields.io/github/issues-raw/syncoding/evdsts)](https://github.com/syncoding/evdsts/issues)
  [![GitHub top language](https://img.shields.io/github/languages/top/syncoding/evdsts)](https://github.com/syncoding/evdsts)
  [![GitHub Fork](https://img.shields.io/github/forks/syncoding/evdsts?style=social)](https://img.shields.io/github/forks/syncoding/evdsts?style=social)
