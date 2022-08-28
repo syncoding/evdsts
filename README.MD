@@ -76,9 +76,9 @@ detaylı olarak öğrenmek için:
 [__THE USER MANUAL (EN)__](https://github.com/syncoding/evdsts/blob/master/docs/manuals/manual_en.md)
 dökümanlarına göz atın.
 
-## __Örnekler__ [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)]((https://colab.research.google.com/github/syncoding/evdsts/blob/master/examples/ornekler.ipynb))
+## __Örnekler__ [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/syncoding/evdsts/blob/master/examples/ornekler.ipynb)
 
-Ana kullanım senaryolarını içeren [__Jupyter Notebook Uygulaması__](https://github.com/syncoding/evdsts/blob/master/examples/)'nı indirin ya da yukarıdaki _open in colab_ linkini kullanarak uygulamayı __Google Colab__ üzerinde açın.
+Ana kullanım senaryolarını içeren [__Jupyter Notebook Uygulaması__](https://github.com/syncoding/evdsts/blob/master/examples/)'nı indirin ya da yukarıdaki _Open in Colab_ linkini kullanarak uygulamayı __Google Colab__ üzerinde açın.
 
 
 ## __Gereklilikler__

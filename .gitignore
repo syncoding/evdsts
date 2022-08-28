@@ -2,7 +2,6 @@
 **/test.py
 **/evds_series_references.json
 **/evds_api_key.json
-**/data/
 
 # VS Code
 .vscode/**/*

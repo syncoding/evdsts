@@ -75,7 +75,7 @@ Please see [__THE USER MANUAL__](https://github.com/syncoding/evdsts/blob/master
 ## __Examples__ [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/syncoding/evdsts/blob/master/examples/examples.ipynb)
 
 Please download the [__Jupyter Notebook Application__](https://github.com/syncoding/evdsts/blob/master/examples) that covers the main use cases of `evdsts`,
-or alternatively open it on __Google Colab__ by clicking the _open in colab_ link above.
+or alternatively open it on __Google Colab__ by clicking the _Open in Colab_ link above.
 
 ## __Dependencies__
 
