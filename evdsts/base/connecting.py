@@ -994,7 +994,7 @@ class Connector:
                 "deleted or changed.\n"
             )
 
-        print("{:^50}".format("References Table"))
+        print("{:^60}".format("References Table"))
         print("-" * 60)
         print(f"Reference Name Represents -> Original {reference_type.title()} Names on EVDS")
         print("-" * 60)

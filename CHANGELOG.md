@@ -2,6 +2,10 @@
 
 ## evdsts Changelog
 
+### V.1.0.rc2
+- Bug Fixes in documentation
+- A Bug Fix in setup.py
+- A small fix in Connector
 
 ### V.1.0.rc1
 - First release candidate.
