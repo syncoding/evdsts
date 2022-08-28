@@ -8,7 +8,7 @@ setup(
     name= "evdsts",
     author= "Burak Celik",
     author_email= "synertic@gmail.com",
-    version= "1.0rc1",
+    version= "1.0rc2",
     description= "A Python implementation for retrieving and transforming macroeconomic time series data from TCMB EVDS (CBRT EDDS) API.",
     long_description= long_description,
     long_description_content_type='text/markdown',
@@ -32,8 +32,12 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Natural Language :: Turkish",
         "Natural Language :: English",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3 :: Only"
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10"
     ],
     python_requires= ">=3.6"
 )

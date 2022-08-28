@@ -72,7 +72,7 @@ tiplerinin anotasyonu (gerekli yorumlarla birlikte) yapılmıştır.
 
 `evdsts`'yi nasıl kullanacağınızı ve EVDS'ye bağlantı için gereken API anahtarını nasıl alacağınızı
 detaylı olarak öğrenmek için:  
-[__KULLANICI EL KITABI (TR)__](https://github.com/syncoding/evdsts/blob/master/docs/manuals/manual_tr.md) ya da
+[__KULLANICI EL KITABI (TR)__](https://github.com/syncoding/evdsts/blob/master/docs/manuals/manual_tr.md) ya da  
 [__THE USER MANUAL (EN)__](https://github.com/syncoding/evdsts/blob/master/docs/manuals/manual_en.md)  
 dökümanlarına göz atın.
 
@@ -119,7 +119,7 @@ conda install evdsts -c conda-forge
 
 ## __Kaynak Kod__
 
-[GitHub](https://github.com/syncoding/evdsts/evdsts)
+[GitHub](https://github.com/syncoding/evdsts/blob/master/evdsts)
 
 ## __Versiyon Değişiklik Günlüğü__
 [__Changelog__](https://github.com/syncoding/evdsts/blob/master/CHANGELOG.md)

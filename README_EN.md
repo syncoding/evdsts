@@ -115,7 +115,7 @@ conda install evdsts -c conda-forge
 
 ## __Source Code__
 
-[GitHub](https://github.com/syncoding/evdsts/evdsts)
+[GitHub](https://github.com/syncoding/evdsts/blob/master/evdsts)
 
 ## __Changelog__
 
