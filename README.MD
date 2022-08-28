@@ -13,7 +13,7 @@
 ### [__Click here to access the English version of this document__](/README_EN.md)
 ## __Amaç__
 
-`evdsts` __Türkiye Cumhuriyet Merkez Bankası__ __Elektronik Veri Dağıtım Sistemi__ __(EVDS) API
+`evdsts` __Türkiye Cumhuriyet Merkez Bankası__ __Elektronik Veri Dağıtım Sistemi__ __(EVDS)__ API
 üzerinden makroekonomik veri alımı için geliştirilmiş bir Python uyarlamasıdır. `evdsts`, verdiği
 zaman serileri analizine hazır çıktılar ve diğer faydalı dönüşümleriyle; hem veri alımını hem de
 zaman serileri anzlizlerini kolaylaştırmak için dizayn edilmiştir.
