@@ -2,10 +2,16 @@
 
 ## evdsts Changelog
 
-### V.1.0.rc2
+### V.1.0rc3
+ - Reference tables fix
+ - Internal class versioning
+ - transformations and aggregations parsing fix
+
+
+### V.1.0rc2
 - Bug Fixes in documentation
 - A Bug Fix in setup.py
 - A small fix in Connector
 
-### V.1.0.rc1
+### V.1.0rc1
 - First release candidate.

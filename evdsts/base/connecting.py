@@ -3,7 +3,8 @@
 __author__ = "Burak CELIK"
 __copyright__ = "Copyright (c) 2022 Burak CELIK"
 __license__ = "MIT"
-__version__ = "1.0rc2"
+__version__ = "1.0rc3"
+__internal__ = "0.0.1"
 
 
 from datetime import datetime, timedelta
@@ -710,13 +711,15 @@ class Connector:
                 if len(names) == 1:
                     names = [functions]
             real_functions = [name.strip() for name in names]
+        elif isinstance(functions, int):
+            real_functions = [functions]
         elif isinstance(functions, Sequence):
             real_functions = list(functions)
         else:
             raise TypeError(
                 "function names must be given either comma or space separated string like;\n"
-                "'percent, diff' or\n'percent diff\nor in a Sequence type container "
-                "like list or tuple"
+                "'percent, diff' or\n'percent diff'\nor in a Sequence type container "
+                "like List or Tuple"
             )
 
         return real_functions
