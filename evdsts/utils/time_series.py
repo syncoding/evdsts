@@ -4,6 +4,7 @@ __author__ = "Burak CELIK"
 __copyright__ = "Copyright (c) 2022 Burak CELIK"
 __license__ = "MIT"
 __version__ = "1.0rc2"
+__internal__ = "0.0.1"
 
 from datetime import datetime, timedelta
 import re
