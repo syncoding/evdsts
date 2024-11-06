@@ -3,8 +3,8 @@
 __author__ = "Burak CELIK"
 __copyright__ = "Copyright (c) 2022 Burak CELIK"
 __license__ = "MIT"
-__version__ = "1.0rc3"
-__internal__ = "0.0.1"
+__version__ = "1.0rc4"
+__internal__ = "0.0.2"
 
 
 from datetime import datetime, timedelta
@@ -15,6 +15,7 @@ from string import ascii_letters, digits
 from typing import Optional, Sequence, Union, Any, List, Tuple, Dict
 from urllib.error import HTTPError
 import webbrowser
+import ssl
 
 
 import pandas as pd
@@ -25,7 +26,7 @@ from requests.exceptions import RequestException
 from evdsts.base.searching import SearchEngine
 from evdsts.base.transforming import _set_precision
 from evdsts.configuration.cfg import EVDSTSConfig
-from evdsts.configuration.types import JSONType
+from evdsts.configuration.types import JSONType, EVDSHttpAdapter
 from evdsts.configuration.exceptions import (
     AmbiguousFunctionMappingException, APIServiceConnectionException, SubCategoryNotFoundException,
     UndefinedAggregationFunctionException, UndefinedFrequencyException,
@@ -87,6 +88,7 @@ class Connector:
                  show_links: bool = False,
                  proxy_servers: Optional[Dict[str, str]] = None,
                  verify_certificates: bool = True,
+                 secure: bool = True,
                  jupyter_mode: bool = False,
                  precision: Optional[int] = None
     ) -> None:
@@ -131,7 +133,7 @@ class Connector:
         self.jupyter_mode: bool = jupyter_mode
         self.precision: Union[None, int] = precision
         self.main_categories: pd.DataFrame = pd.DataFrame()
-        self.session: requests.Session = requests.Session()
+        self.session: requests.Session = self._create_session(secure=secure)
         self.data: pd.DataFrame = pd.DataFrame()
         self.first_request: bool = True
         self.internal_references_file_call = True
@@ -140,6 +142,7 @@ class Connector:
         self.name_cache: Dict[str, str] = self._load_references()
         self.proxy_servers: Dict[str, str] = proxy_servers
         self.verify_certificates: bool = verify_certificates
+        self.secure: bool = secure
 
         self.search_engine: SearchEngine = SearchEngine(language=language)
         self.language: str = language
@@ -301,6 +304,26 @@ class Connector:
                 ) from None
 
         self._references_file = fname
+
+    def _create_session(self, secure: bool) -> requests.Session:
+
+        """_summary_
+
+        Args:
+            secure (bool): _description_
+
+        Returns:
+            requests.Session: _description_
+        """
+
+        session: requests.Session = requests.Session()
+        if secure:
+            session.adapters.pop("https://", None)
+            context: ssl.SSLContext = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
+            context.options |= 0x4
+            session.mount('https://', EVDSHttpAdapter(context))
+
+        return session
 
     def _language_changed(self, language: str) -> None:
 
@@ -811,7 +834,10 @@ class Connector:
             print(f"request: {api_url}")
 
         try:
-            request: requests.Response = self.session.get(api_url, timeout=(2, 3))
+            request: requests.Response = self.session.get(api_url,
+                                                          timeout=(2, 3),
+                                                          headers={"key":self.api_key}
+            )
         except Timeout as ex:
             print("url: ", api_url)
             raise APIServiceConnectionException(
