@@ -97,12 +97,11 @@ class LSELinalg:
         return coeffs
 
     @staticmethod
-    def _forecast(y: np.ndarray, x:np.ndarray, coeffs:np.ndarray) -> np.ndarray:
+    def _forecast(x: np.ndarray, coeffs: np.ndarray) -> np.ndarray:
 
         """Returns LS forecast series
 
         Args:
-            - y (np.ndarray): dependent variable vector
             - x (np.ndarray): independent variable matrix
             - coeffs (np.ndarray): LS coefficients vector
 
@@ -190,7 +189,7 @@ class LSELinalg:
         return rss
 
     @staticmethod
-    def _ess(y:np.ndarray, forecast:np.ndarray) -> np.floating:
+    def _ess(y: np.ndarray, forecast: np.ndarray) -> np.floating:
 
         """Returns explained sum of squares
 
@@ -205,7 +204,7 @@ class LSELinalg:
         return np.nansum((forecast - np.nanmean(y)) ** 2)
 
     @staticmethod
-    def _tss(y:np.ndarray) -> np.floating:
+    def _tss(y: np.ndarray) -> np.floating:
 
         """Returns total sum of squares
 
@@ -230,7 +229,7 @@ class LSELinalg:
         return 1 - np.divide(LSELinalg._rss(resids), LSELinalg._tss(y))
 
     @staticmethod
-    def _adj_r2(y: np.ndarray, x:np.ndarray, resids:np.ndarray) -> np.floating:
+    def _adj_r2(y: np.ndarray, x: np.ndarray, resids: np.ndarray) -> np.floating:
 
         """Returns adjusted determination coefficient
 
@@ -566,8 +565,8 @@ class Evaluator:
                  n: int,
                  alpha: float,
                  const: bool = False,
-                 trend:bool = False
-    ) ->TestResult:
+                 trend: bool = False
+    ) -> TestResult:
         """Evaluates the result as per related test critical value and returns a TestResult object
 
         Args:
@@ -634,7 +633,7 @@ class LSEModelResults:
 
     def __init__(
                  self,
-                 model:str,
+                 model: str,
                  y: np.ndarray,
                  x: np.ndarray,
                  coeffs: np.ndarray,
@@ -695,12 +694,12 @@ class LSEModelResults:
         print("-" * 70)
 
         print("{:10} {:10} {:10} {:10} {:20}".format(
-            "Parameter", "Coeff", "Std.Error", "t-Stats", f"CI (Z alpha = 0.01)")
+            "Parameter", "Coeff", "Std.Error", "t-Stats", "CI (Z alpha = 0.01)")
         )
         print("-" * 70)
 
         for idx, (coeff, std_error, t_stat) in enumerate(zip(self.coeffs, self.standard_errors, self.t_stats)):
-            par: str =  f"B{idx}" if self.const else f"B{idx + 1}"
+            par: str = f"B{idx}" if self.const else f"B{idx + 1}"
             cff: str = str(round(coeff, 5))
             stderr: str = str(round(std_error, 5))
             tstat: str = str(round(t_stat, 5))
@@ -717,7 +716,6 @@ class LSEModelResults:
         print(f"aic: {self.aic: 5f},      bic: {self.bic: 5f},          d.f.: {self.dof}")
         print(f"dw: {self.dw: 5f}")
         print("-" * 70)
-
 
 
 class LSModeller:
@@ -870,7 +868,7 @@ class LSModeller:
                 return None
 
         coeffs: np.ndarray = LSELinalg._lse_coeffs(y=y, x=x)
-        forecast: np.ndarray = LSELinalg._forecast(y=y, x=x, coeffs=coeffs)
+        forecast: np.ndarray = LSELinalg._forecast(x=x, coeffs=coeffs)
         resids: np.ndarray = LSELinalg._resids(y=y, forecast=forecast)
         beta_var_cov: np.ndarray = LSELinalg._beta_varcov_matrix(x=x, resids=resids)
         standard_errors: np.ndarray = LSELinalg._beta_standard_errors(var_cov_matrix=beta_var_cov)
@@ -1033,7 +1031,7 @@ class LSModeller:
     def coint_test(
                    self,
                    dependent: Union[str, int] = 0,
-                   ensure_integration = False,
+                   ensure_integration: bool = False,
                    const: bool = True,
                    trend: bool = False,
                    lag_criterion: str = "bic",
@@ -1127,4 +1125,3 @@ class LSModeller:
                 print(f"{series_names} series are NOT CO-INTEGRATED as per given model")
 
         return test_result
-

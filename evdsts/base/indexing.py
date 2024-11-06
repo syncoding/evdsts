@@ -3,8 +3,8 @@
 __author__ = "Burak CELIK"
 __copyright__ = "Copyright (c) 2022 Burak CELIK"
 __license__ = "MIT"
-__version__ = "1.0rc3"
-__internal__ = "0.0.1"
+__version__ = "1.0rc4"
+__internal__ = "0.0.2"
 
 
 import json
@@ -28,7 +28,8 @@ class IndexBuilder:
                  key: Optional[str] = None,
                  language: str = "TR",
                  proxy_servers: Optional[Dict[str, str]] = None,
-                 verify_certificates: bool = True
+                 verify_certificates: bool = True,
+                 secure: bool = True,
                  ) -> None:
 
         """EVDS (EDDS) Search Index Builder.
@@ -54,7 +55,8 @@ class IndexBuilder:
             key=self.key,
             language=language,
             proxy_servers=proxy_servers,
-            verify_certificates=verify_certificates
+            verify_certificates=verify_certificates,
+            secure=secure
         )
 
         self.language: str = language

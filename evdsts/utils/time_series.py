@@ -445,7 +445,7 @@ def crete_ts_index(df: pd.DataFrame, method: str) -> pd.Series:
     # date range frequencies corresponding to determined frequencies.
     frequency_map: Dict[str, str] = dict(
         daily="D", bdaily="B", weekly="W", semimonthly="SM",
-        monthly="M", quarterly="Q", semiyearly="6M", yearly="Y"
+        monthly="ME", quarterly="Q", semiyearly="6M", yearly="Y"
     )
 
     # iterate through all sniffed date formats to determine which one is correct.
@@ -453,7 +453,7 @@ def crete_ts_index(df: pd.DataFrame, method: str) -> pd.Series:
     # because that would mean fitting the to the created frequency. On contrary, we need
     # to fit our date range to data to determine the correct frequency.
     # name: pd.Series name, frequencies: a list of sniffed formats from the sample data.
-    for name, frequencies in possible_date_frequencies.iteritems():
+    for name, frequencies in possible_date_frequencies.items():
         # iterate through all sniffed frequencies to determine which one is actually suitable
         # for the data that is returned from the EVDS API.
         for frequency in frequencies:
@@ -531,7 +531,7 @@ def crete_ts_index(df: pd.DataFrame, method: str) -> pd.Series:
                 else:
                     continue
             # same idea with semiyearly data
-            if freq == "M":
+            if freq == "ME":
                 for separator in config.date_separators:
                     splitted_first = first.split(separator)
                     splitted_last = last.split(separator)
