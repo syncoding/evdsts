@@ -8,10 +8,7 @@ setup(
     name= "evdsts",
     author= "Burak Celik",
     author_email= "synertic@gmail.com",
-<<<<<<< HEAD
     license= "MIT",
-=======
->>>>>>> dev
     version= "1.0rc4",
     description= "A Python implementation for retrieving and transforming macroeconomic time series data from TCMB EVDS (CBRT EDDS) API.",
     long_description= long_description,
