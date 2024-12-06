@@ -2,11 +2,15 @@
 
 ## evdsts Changelog
 
+### V.1.0rc5
+ - Connection and read timeouts are increased
+
+
 ### V.1.0rc4
  - API SSL handshake fix
  - Pandas 2.0 method calls fix
  - Index update
- - Experimental Class LSModeller to perform LS Modelling, ADF and Cointegration test
+ - Experimental Class LSModeller to perform LS Modelling, ADF and Cointegration tests
 
 ### V.1.0rc3
  - Reference tables fix

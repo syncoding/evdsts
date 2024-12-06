@@ -3,8 +3,8 @@
 __author__ = "Burak CELIK"
 __copyright__ = "Copyright (c) 2022 Burak CELIK"
 __license__ = "MIT"
-__version__ = "1.0rc4"
-__internal__ = "0.0.2"
+__version__ = "1.0rc5"
+__internal__ = "0.0.3"
 
 
 from datetime import datetime, timedelta
@@ -77,6 +77,8 @@ class Connector:
                 "ccount.\n7. Click on your username and then click 'Profile' on opened sliding "
                 "menu.\n8. You can get your API key by clicking 'API Key' on newly opened page "
             )
+        else:
+            raise ValueError("Language must be either TR or ENG")
 
         print(instructions)
         webbrowser.open(EVDSTSConfig.url_sign_up, new=2)
@@ -835,7 +837,7 @@ class Connector:
 
         try:
             request: requests.Response = self.session.get(api_url,
-                                                          timeout=(2, 3),
+                                                          timeout=(5, 5),
                                                           headers={"key":self.api_key}
             )
         except Timeout as ex:

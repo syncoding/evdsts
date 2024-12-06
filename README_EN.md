@@ -81,9 +81,9 @@ or alternatively open it on __Google Colab__ by clicking the _Open in Colab_ lin
 
 `evdsts` is a __Python 3__ only project and depends on below packages:
 
-1. cpython >= 3.6.15 (or equivalent PyPy distribution)
-1. pandas >= 0.25.3
-2. requests >= 2.12.5
+1. cpython >= 3.8.0 (or equivalent PyPy distribution)
+1. pandas >= 2.0.0
+2. requests >= 2.12.0
 
 ## __Additional Requirements__
 

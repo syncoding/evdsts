@@ -7,12 +7,13 @@ A simple least squares linear modelling class aims at using nothing except numpy
 __author__ = "Burak CELIK"
 __copyright__ = "Copyright (c) 2022 Burak CELIK"
 __license__ = "MIT"
-__version__ = "1.0rc4"
+__version__ = "1.0rc5"
 __internal__ = "0.0.1"
 
 
 import enum
-from typing import Dict, List, Tuple, Union, Optional
+from typing import Dict, List, Tuple, Union, Optional, Any
+from numpy.typing import NDArray
 
 import numpy as np
 from numpy.linalg import LinAlgError
@@ -26,53 +27,53 @@ class LSELinalg:
     """LS Linear Algebra Calculations Class"""
 
     @staticmethod
-    def _shif_array(arr: np.ndarray, lag: int) -> np.ndarray:
+    def _shif_array(arr: NDArray[Any], lag: int) -> NDArray[Any]:
 
         """Returns the lagged series of given series
 
         Returns:
-            - np.ndarray: Lagged series
+            - NDArray[Any]: Lagged series
         """
 
         return np.concatenate(([np.nan] * lag, arr[:-lag]))
 
     @staticmethod
-    def _id_variable_matrix(x: np.ndarray, const: bool, trend: bool) -> np.ndarray:
+    def _id_variable_matrix(x: NDArray[Any], const: bool, trend: bool) -> NDArray[Any]:
 
         """Returns independent variable matrix
 
         Args:
-            - x (np.ndarray): independent variable vector
+            - x (NDArray[Any]): independent variable vector
             - const (bool): constant term is included.
             - trend (bool): deterministic trend is included
 
         Returns:
-            - np.ndarray: independent variable matrix
+            - NDArray[Any]: independent variable matrix
         """
 
         if const:
-            c: np.ndarray = np.ones(len(x))
-            x: np.ndarray = np.column_stack([c, x])
+            c: NDArray[Any] = np.ones(len(x))
+            x: NDArray[Any] = np.column_stack([c, x])
         if trend:
-            t: np.ndarray = np.arange(0, len(x))
-            x: np.ndarray = np.column_stack([x, t])
+            t: NDArray[Any] = np.arange(0, len(x))
+            x: NDArray[Any] = np.column_stack([x, t])
 
         return x
 
     @staticmethod
-    def _inverse_xtx(x: np.ndarray) -> np.ndarray:
+    def _inverse_xtx(x: NDArray[Any]) -> NDArray[Any]:
 
         """Returns X.T(X)
 
         Args:
-            - x (np.ndarray): independent variable matrix
+            - x (NDArray[Any]): independent variable matrix
 
         Returns:
-            - np.ndarray: X.T(X)
+            - NDArray[Any]: X.T(X)
         """
 
         try:
-            inv_xtx: np.ndarray = np.linalg.inv(np.dot(x.T, x))
+            inv_xtx: NDArray[Any] = np.linalg.inv(np.dot(x.T, x))
         except LinAlgError:
             print("X'X forms a singular matrix, and therefore not an invertable")
             raise
@@ -80,68 +81,68 @@ class LSELinalg:
         return inv_xtx
 
     @staticmethod
-    def _lse_coeffs(y: np.ndarray, x: np.ndarray) -> np.ndarray:
+    def _lse_coeffs(y: NDArray[Any], x: NDArray[Any]) -> NDArray[Any]:
 
         """Returns least squares estimation coefficients.
 
         Args:
-            - y (np.ndarray): dependent variable vector
-            - x (np.ndarray): independent variable matrix
+            - y (NDArray[Any]): dependent variable vector
+            - x (NDArray[Any]): independent variable matrix
 
         Returns:
-            - np.ndarray: LS equation coefficients
+            - NDArray[Any]: LS equation coefficients
         """
 
-        coeffs: np.ndarray = np.dot(LSELinalg._inverse_xtx(x), np.dot(x.T, y))
+        coeffs: NDArray[Any] = np.dot(LSELinalg._inverse_xtx(x), np.dot(x.T, y))
 
         return coeffs
 
     @staticmethod
-    def _forecast(x: np.ndarray, coeffs: np.ndarray) -> np.ndarray:
+    def _forecast(x: NDArray[Any], coeffs: NDArray[Any]) -> NDArray[Any]:
 
         """Returns LS forecast series
 
         Args:
-            - x (np.ndarray): independent variable matrix
-            - coeffs (np.ndarray): LS coefficients vector
+            - x (NDArray[Any]): independent variable matrix
+            - coeffs (NDArray[Any]): LS coefficients vector
 
         Returns:
-            - np.ndarray: Forecast series
+            - NDArray[Any]: Forecast series
         """
-        forecast: np.ndarray = np.dot(x, coeffs)
+        forecast: NDArray[Any] = np.dot(x, coeffs)
 
         return forecast
 
     @staticmethod
-    def _resids(y: np.ndarray, forecast: np.ndarray) -> np.ndarray:
+    def _resids(y: NDArray[Any], forecast: NDArray[Any]) -> NDArray[Any]:
 
         """Returns LS forecast residual series
 
         Args:
-            - y (np.ndarray): dependent variable vector
-            - forecast (np.ndarray): LS model forecast series
+            - y (NDArray[Any]): dependent variable vector
+            - forecast (NDArray[Any]): LS model forecast series
 
         Returns:
-            - np.ndarray: Residual series
+            - NDArray[Any]: Residual series
         """
-        residuals: np.ndarray = y - forecast
+        residuals: NDArray[Any] = y - forecast
 
         return residuals
 
     @staticmethod
-    def _resid_var(resids: np.ndarray, x: np.ndarray) -> np.floating:
+    def _resid_var(resids: NDArray[Any], x: NDArray[Any]) -> np.float32:
 
         """Returns variance of residuals
 
         Args:
-            - resids (np.ndarray): residual series
-            - x (np.ndarray): independent variable matrix
+            - resids (NDArray[Any]): residual series
+            - x (NDArray[Any]): independent variable matrix
 
         Raises:
             - ZeroDivisionError: If degree of freedom equals to 0
 
         Returns:
-            - np.floating: variance of residuals
+            - np.float32: variance of residuals
         """
         n: int = x.shape[0]
         k: int = x.shape[1]
@@ -150,102 +151,102 @@ class LSELinalg:
         if degree_of_fredom == 0:
             raise ZeroDivisionError("Resid Variance: Degree of freedom is 0")
 
-        resid_var: np.floating = (1 / degree_of_fredom) * np.sum(resids ** 2)
+        resid_var: np.float32 = (1 / degree_of_fredom) * np.sum(resids ** 2)
 
         return resid_var
 
     @staticmethod
-    def _beta_varcov_matrix(x: np.ndarray, resids: np.ndarray) -> np.ndarray:
+    def _beta_varcov_matrix(x: NDArray[Any], resids: NDArray[Any]) -> NDArray[Any]:
 
         """Returns Variance-Covariance matrix of the LS model coefficients
 
         Args:
-            - x (np.ndarray): independent variable matrix
-            - resids (np.ndarray): residual series
+            - x (NDArray[Any]): independent variable matrix
+            - resids (NDArray[Any]): residual series
 
         Returns:
-            - np.ndarray: Var-Cov matrix of Beta coefficients
+            - NDArray[Any]: Var-Cov matrix of Beta coefficients
         """
-        inv_xtx: np.ndarray = LSELinalg._inverse_xtx(x)
-        resid_var: np.floating = LSELinalg._resid_var(resids, x)
+        inv_xtx: NDArray[Any] = LSELinalg._inverse_xtx(x)
+        resid_var: np.float32 = LSELinalg._resid_var(resids, x)
 
-        b_var_cov: np.ndarray = resid_var * inv_xtx
+        b_var_cov: NDArray[Any] = resid_var * inv_xtx
 
         return b_var_cov
 
     @staticmethod
-    def _rss(resids: np.ndarray) -> np.floating:
+    def _rss(resids: NDArray[Any]) -> np.float32:
 
         """Returns residual sum of squares
 
         Args:
-            - resids (np.ndarray): residual series
+            - resids (NDArray[Any]): residual series
 
         Returns:
-            - np.floating: RSS
+            - np.float32: RSS
         """
-        rss: np.floating = np.nansum(resids ** 2)
+        rss: np.float32 = np.nansum(resids ** 2)
 
         return rss
 
     @staticmethod
-    def _ess(y: np.ndarray, forecast: np.ndarray) -> np.floating:
+    def _ess(y: NDArray[Any], forecast: NDArray[Any]) -> np.float32:
 
         """Returns explained sum of squares
 
         Args:
-            - y (np.ndarray): dependent variable vector
-            - forecast (np.ndarray): forecast series
+            - y (NDArray[Any]): dependent variable vector
+            - forecast (NDArray[Any]): forecast series
 
         Returns:
-            - np.floating: ESS
+            - np.float32: ESS
         """
 
         return np.nansum((forecast - np.nanmean(y)) ** 2)
 
     @staticmethod
-    def _tss(y: np.ndarray) -> np.floating:
+    def _tss(y: NDArray[Any]) -> np.float32:
 
         """Returns total sum of squares
 
         Args:
-            - y (np.ndarray): dependent variable vector
+            - y (NDArray[Any]): dependent variable vector
 
         Returns:
-            - np.floating: TSS
+            - np.float32: TSS
         """
 
         return np.nansum((y - np.nanmean(y)) ** 2)
 
     @staticmethod
-    def _r2(y: np.ndarray, resids: np.ndarray) -> np.floating:
+    def _r2(y: NDArray[Any], resids: NDArray[Any]) -> np.float32:
 
         """Returns determination coefficient
 
         Returns:
-            - np.floating: R-squarred
+            - np.float32: R-squarred
         """
 
         return 1 - np.divide(LSELinalg._rss(resids), LSELinalg._tss(y))
 
     @staticmethod
-    def _adj_r2(y: np.ndarray, x: np.ndarray, resids: np.ndarray) -> np.floating:
+    def _adj_r2(y: NDArray[Any], x: NDArray[Any], resids: NDArray[Any]) -> np.float32:
 
         """Returns adjusted determination coefficient
 
         Args:
-            - y (np.ndarray): dependent variable vector
-            - x (np.ndarray): independent variable matrix
-            - resids (np.ndarray): residual series
+            - y (NDArray[Any]): dependent variable vector
+            - x (NDArray[Any]): independent variable matrix
+            - resids (NDArray[Any]): residual series
 
         Raises:
             - ValueError: if degree of freedom equals to 0
 
         Returns:
-            - np.floating: adj-R-squarred
+            - np.float32: adj-R-squarred
         """
 
-        r2: np.floating = LSELinalg._r2(y, resids)
+        r2: np.float32 = LSELinalg._r2(y, resids)
 
         n: int = x.shape[0]
         k: int = x.shape[1]
@@ -259,43 +260,43 @@ class LSELinalg:
         return r2 - (1 - r2) * (nominator / denominator)
 
     @staticmethod
-    def _mse(resids: np.ndarray) -> np.floating:
+    def _mse(resids: NDArray[Any]) -> np.float32:
 
         """Returns mean squarred errors
 
         Args:
-            - resids (np.ndarray): residual series
+            - resids (NDArray[Any]): residual series
 
         Returns:
-            - np.floating: MSE
+            - np.float32: MSE
         """
 
-        mse: np.floating = LSELinalg._rss(resids) / len(resids)
+        mse: np.float32 = LSELinalg._rss(resids) / len(resids)
 
         return mse
 
     @staticmethod
-    def _loglikelihood(resids: np.ndarray) -> np.floating:
+    def _loglikelihood(resids: NDArray[Any]) -> np.float32:
 
         """Return the result of log-likelihood function
 
         Args:
-            - resids (np.ndarray): residual series
+            - resids (NDArray[Any]): residual series
 
         Returns:
-            - np.floating: LLF(residuals)
+            - np.float32: LLF(residuals)
         """
 
-        rss: np.floating = LSELinalg._rss(resids)
+        rss: np.float32 = LSELinalg._rss(resids)
         n: int = len(resids)
-        loglikelihood: np.floating = (
+        loglikelihood: np.float32 = (
             (-n / 2) * np.log(2 * np.pi) - (n / 2) * np.log(rss / n) - (n / 2)
         )
 
         return loglikelihood
 
     @staticmethod
-    def _aic(resids: np.ndarray, k: int) -> np.floating:
+    def _aic(resids: NDArray[Any], k: int) -> np.float32:
 
         """Returns Akaike Information Criterion
 
@@ -303,98 +304,98 @@ class LSELinalg:
         Institute of Statistical Mathematics, 21, 243-247.
 
         Args:
-            - resids (np.ndarray): residual series
+            - resids (NDArray[Any]): residual series
             - k (int): number of LS model parameters
 
         Returns:
-            - np.floating: AIC
+            - np.float32: AIC
         """
 
-        loglikelihood: np.floating = LSELinalg._loglikelihood(resids)
-        aic: np.floating = -2 * loglikelihood + 2 * k
+        loglikelihood: np.float32 = LSELinalg._loglikelihood(resids)
+        aic: np.float32 = -2 * loglikelihood + 2 * k
 
         return aic
 
     @staticmethod
-    def _bic(resids: np.floating, k: int) -> np.floating:
+    def _bic(resids: np.float32, k: int) -> np.float32:
 
         """Returns Schwarz Bayesian Criterion
         Schwarz, G. (1978), "Estimating the Dimension of a Model". Annals of Statistics,
         6, 461-464.
 
         Args:
-            - resids (np.floating): residual series
+            - resids (np.float32): residual series
             - k (int): number of LS model parameters
 
         Returns:
-            - np.floating: BIC
+            - np.float32: BIC
         """
 
-        n: np.floating = len(resids)
-        loglikelihood: np.floating = LSELinalg._loglikelihood(resids)
-        bic: np.floating = - 2 * loglikelihood + k * np.log(n)
+        n: int = len(resids)
+        loglikelihood: np.float32 = LSELinalg._loglikelihood(resids)
+        bic: np.float32 = - 2 * loglikelihood + k * np.log(n)
 
         return bic
 
     @staticmethod
-    def _dw(resids: np.ndarray) -> np.floating:
+    def _dw(resids: NDArray[Any]) -> np.float32:
 
         """Returns Durbin-Watson Test Stats
         Durbin, J.; Watson, G. S. (1950). "Testing for Serial Correlation in Least Squares Regression,
         I". Biometrika. 37 (3-4): 409-428.
 
         Args:
-            - resids (np.ndarray): residual series
+            - resids (NDArray[Any]): residual series
 
         Returns:
-            - np.floating: DW test stats
+            - np.float32: DW test stats
         """
 
-        dw: np.floating = (
+        dw: np.float32 = (
             np.nansum((resids - LSELinalg._shif_array(resids, 1)) ** 2) / np.nansum(resids ** 2)
         )
 
         return dw
 
     @staticmethod
-    def _beta_variances(var_cov_matrix: np.ndarray) -> np.ndarray:
+    def _beta_variances(var_cov_matrix: NDArray[Any]) -> NDArray[Any]:
 
         """Variances of LS Model Beta coefficients
 
         Args:
-            - var_cov_matrix (np.ndarray): Variance-Covariance Matrix of Beta coefficients
+            - var_cov_matrix (NDArray[Any]): Variance-Covariance Matrix of Beta coefficients
 
         Returns:
-            - np.ndarray: _description_
+            - NDArray[Any]: _description_
         """
 
         return var_cov_matrix.diagonal()
 
     @staticmethod
-    def _beta_standard_errors(var_cov_matrix: np.ndarray) -> np.ndarray:
+    def _beta_standard_errors(var_cov_matrix: NDArray[Any]) -> NDArray[Any]:
 
         """Standard errors of Beta coefficients
 
         Args:
-            - var_cov_matrix (np.ndarray): Variance-Covariance Matrix of LS Model Beta coefficients
+            - var_cov_matrix (NDArray[Any]): Variance-Covariance Matrix of LS Model Beta coefficients
 
         Returns:
-            - np.ndarray: Beta Standard Errors
+            - NDArray[Any]: Beta Standard Errors
         """
 
         return np.sqrt(LSELinalg._beta_variances(var_cov_matrix))
 
     @staticmethod
-    def _t_stats(coeffs: np.ndarray, standard_errors: np.ndarray) -> np.ndarray:
+    def _t_stats(coeffs: NDArray[Any], standard_errors: NDArray[Any]) -> NDArray[Any]:
 
         """t stats of LS model Beta coefficients
 
         Args:
-            - coeffs (np.ndarray): LS Model Beta coefficients vector
-            - standard_errors (np.ndarray): Standard errors of Beta vector
+            - coeffs (NDArray[Any]): LS Model Beta coefficients vector
+            - standard_errors (NDArray[Any]): Standard errors of Beta vector
 
         Returns:
-            - np.ndarray: _description_
+            - NDArray[Any]: _description_
         """
 
         return np.divide(coeffs, standard_errors)
@@ -403,7 +404,7 @@ class LSELinalg:
     def _variable_matrixes(
                            series: pd.DataFrame,
                            y: Union[str, int]
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> Tuple[NDArray[Any], NDArray[Any]]:
 
         """Returns dependent variable vector and independent variable matrix
 
@@ -419,13 +420,13 @@ class LSELinalg:
             - TypeError: If wrong type is given for deternmining dependent variable
 
         Returns:
-            - Tuple[np.ndarray, np.ndarray]: dependent variable vector and independent variable matrix
+            - Tuple[NDArray[Any], NDArray[Any]]: dependent variable vector and independent variable matrix
         """
 
         if isinstance(y, str):
             try:
-                x: np.ndarray = series.drop(columns=y).to_numpy()
-                y: np.ndarray = series.loc[:, series.columns == y].to_numpy()[:, 0]
+                x: NDArray[Any] = series.drop(columns=y).to_numpy()
+                y: NDArray[Any] = series.loc[:, series.columns == y].to_numpy()[:, 0]
             except KeyError:
                 raise KeyError(f"Given column ({y}) is not in DataFrame!") from None
         elif isinstance(y, int):
@@ -507,9 +508,9 @@ class TestResult:
 
     """A test result class returns from different kinds of tests"""
 
-    def __init__(self, stats: np.floating, critical: float, result: bool) -> None:
+    def __init__(self, stats: np.float32, critical: float, result: bool) -> None:
 
-        self.stats: np.floating = stats
+        self.stats: np.float32 = stats
         self.critical: float = critical
         self.result: bool = result
 
@@ -634,22 +635,22 @@ class LSEModelResults:
     def __init__(
                  self,
                  model: str,
-                 y: np.ndarray,
-                 x: np.ndarray,
-                 coeffs: np.ndarray,
-                 standard_errors: np.ndarray,
-                 t_stats: np.ndarray,
-                 forecast: np.ndarray,
-                 resids: np.ndarray,
-                 r2: np.floating,
-                 adj_r2: np.floating,
-                 aic: np.floating,
-                 bic: np.floating,
-                 mse: np.floating,
-                 rss: np.floating,
-                 ess: np.floating,
-                 tss: np.floating,
-                 dw: np.floating,
+                 y: NDArray[Any],
+                 x: NDArray[Any],
+                 coeffs: NDArray[Any],
+                 standard_errors: NDArray[Any],
+                 t_stats: NDArray[Any],
+                 forecast: NDArray[Any],
+                 resids: NDArray[Any],
+                 r2: np.float32,
+                 adj_r2: np.float32,
+                 aic: np.float32,
+                 bic: np.float32,
+                 mse: np.float32,
+                 rss: np.float32,
+                 ess: np.float32,
+                 tss: np.float32,
+                 dw: np.float32,
                  n: int,
                  k: int,
                  dof: int,
@@ -658,22 +659,22 @@ class LSEModelResults:
     ) -> None:
 
         self.model: str = model
-        self.y: np.ndarray = y
-        self.x: np.ndarray = x
-        self.coeffs: np.ndarray = coeffs
-        self.standard_errors: np.ndarray = standard_errors
-        self.t_stats: np.ndarray = t_stats
-        self.forecast: np.ndarray = forecast
-        self.resids: np.ndarray = resids
-        self.r2: np.floating = r2
-        self.adj_r2: np.floating = adj_r2
-        self.aic: np.floating = aic
-        self.bic: np.floating = bic
-        self.mse: np.floating = mse
-        self.rss: np.floating = rss
-        self.ess: np.floating = ess
-        self.tss: np.floating = tss
-        self.dw: np.floating = dw
+        self.y: NDArray[Any] = y
+        self.x: NDArray[Any] = x
+        self.coeffs: NDArray[Any] = coeffs
+        self.standard_errors: NDArray[Any] = standard_errors
+        self.t_stats: NDArray[Any] = t_stats
+        self.forecast: NDArray[Any] = forecast
+        self.resids: NDArray[Any] = resids
+        self.r2: np.float32 = r2
+        self.adj_r2: np.float32 = adj_r2
+        self.aic: np.float32 = aic
+        self.bic: np.float32 = bic
+        self.mse: np.float32 = mse
+        self.rss: np.float32 = rss
+        self.ess: np.float32 = ess
+        self.tss: np.float32 = tss
+        self.dw: np.float32 = dw
         self.n: int = n
         self.k: int = k
         self.dof: int = dof
@@ -856,7 +857,7 @@ class LSModeller:
         series = series.iloc[::].dropna(how='any')
 
         y, x = LSELinalg._variable_matrixes(series=series, y=dependent)
-        x: np.ndarray = LSELinalg._id_variable_matrix(x=x, const=const, trend=trend)
+        x: NDArray[Any] = LSELinalg._id_variable_matrix(x=x, const=const, trend=trend)
 
         n: int = len(y)
         k: int = x.shape[1]
@@ -867,23 +868,23 @@ class LSModeller:
             if dataset is not None:
                 return None
 
-        coeffs: np.ndarray = LSELinalg._lse_coeffs(y=y, x=x)
-        forecast: np.ndarray = LSELinalg._forecast(x=x, coeffs=coeffs)
-        resids: np.ndarray = LSELinalg._resids(y=y, forecast=forecast)
-        beta_var_cov: np.ndarray = LSELinalg._beta_varcov_matrix(x=x, resids=resids)
-        standard_errors: np.ndarray = LSELinalg._beta_standard_errors(var_cov_matrix=beta_var_cov)
+        coeffs: NDArray[Any] = LSELinalg._lse_coeffs(y=y, x=x)
+        forecast: NDArray[Any] = LSELinalg._forecast(x=x, coeffs=coeffs)
+        resids: NDArray[Any] = LSELinalg._resids(y=y, forecast=forecast)
+        beta_var_cov: NDArray[Any] = LSELinalg._beta_varcov_matrix(x=x, resids=resids)
+        standard_errors: NDArray[Any] = LSELinalg._beta_standard_errors(var_cov_matrix=beta_var_cov)
 
-        rss: np.floating = LSELinalg._rss(resids=resids)
-        ess: np.floating = LSELinalg._ess(y=y, forecast=forecast)
-        tss: np.floating = LSELinalg._tss(y=y)
-        t_stats: np.ndarray = LSELinalg._t_stats(coeffs=coeffs, standard_errors=standard_errors)
+        rss: np.float32 = LSELinalg._rss(resids=resids)
+        ess: np.float32 = LSELinalg._ess(y=y, forecast=forecast)
+        tss: np.float32 = LSELinalg._tss(y=y)
+        t_stats: NDArray[Any] = LSELinalg._t_stats(coeffs=coeffs, standard_errors=standard_errors)
 
-        r2: np.floating = LSELinalg._r2(y=y, resids=resids)
-        adj_r2: np.floating = LSELinalg._adj_r2(y=y, x=x, resids=resids)
-        dw: np.floating = LSELinalg._dw(resids=resids)
-        mse: np.floating = LSELinalg._mse(resids=resids)
-        aic: np.floating = LSELinalg._aic(resids=resids, k=k)
-        bic: np.floating = LSELinalg._bic(resids=resids, k=k)
+        r2: np.float32 = LSELinalg._r2(y=y, resids=resids)
+        adj_r2: np.float32 = LSELinalg._adj_r2(y=y, x=x, resids=resids)
+        dw: np.float32 = LSELinalg._dw(resids=resids)
+        mse: np.float32 = LSELinalg._mse(resids=resids)
+        aic: np.float32 = LSELinalg._aic(resids=resids, k=k)
+        bic: np.float32 = LSELinalg._bic(resids=resids, k=k)
 
         model_repr: str = LSELinalg._model_repr(
             series=series, y=dependent, const=const, trend=trend
@@ -1011,7 +1012,7 @@ class LSModeller:
         n: int = best_model.n
 
         # B1
-        tau: np.floating = best_model.t_stats[1] if const else best_model.t_stats[0]
+        tau: np.float32 = best_model.t_stats[1] if const else best_model.t_stats[0]
 
         evaluator: Evaluator = Evaluator()
 
@@ -1109,7 +1110,7 @@ class LSModeller:
             dependent=dependent, const=const, trend=trend, show_results=False
         )
 
-        resids: np.ndarray = coint_eq.resids
+        resids: NDArray[Any] = coint_eq.resids
         resid_series: pd.DataFrame = pd.DataFrame(resids)
         resid_series.columns = ["CI_ERRORS"]
 
