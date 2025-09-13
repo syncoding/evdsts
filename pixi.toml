@@ -1,0 +1,13 @@
+[workspace]
+authors = ["synertic <synertic@gmail.com>"]
+channels = ["conda-forge"]
+name = "evdsts"
+platforms = ["linux-64", "win-64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+python = "==3.11"
+pandas = ">=2.0.3,<3"
+requests = ">=2.32.3,<3"

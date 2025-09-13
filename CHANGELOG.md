@@ -2,6 +2,12 @@
 
 ## evdsts Changelog
 
+### V.1.0rc6
+ - Python 3.8, 3.9 and 3.10 support has been dropped
+ - Config has been migrated from setup.py to pyproject.toml
+ - Index Update
+
+
 ### V.1.0rc5
  - Connection and read timeouts are increased
 

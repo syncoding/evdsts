@@ -85,7 +85,7 @@ Ana kullanım senaryolarını içeren [__Jupyter Notebook Uygulaması__](https:/
 
 `evdsts` bir __Python 3__ projesidir ve aşağıda sıralananlar gereklidir:
 
-1. cpython >= 3.8.0 (ya da eşdeğer PyPy sürümü)
+1. cpython >= 3.11.0 (ya da eşdeğer PyPy sürümü)
 1. pandas >= 2.0.0
 2. requests >= 2.12.0
 

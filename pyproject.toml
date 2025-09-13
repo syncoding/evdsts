@@ -1,0 +1,85 @@
+[project]
+description = "A Python implementation for retrieving and transforming macroeconomic time series data from TCMB EVDS (CBRT EDDS) API."
+authors = [
+    {name = "Burak CELIK", email = "synertic@gmail.com"}
+]
+maintainers = [
+    { name = "syncoding", email = "synertic@gmail.com" },
+]
+dependencies = [
+    "pandas>=2.0.0",
+    "requests>=2.12.5",
+]
+readme = "README_EN.md"
+license = "MIT"
+license-files = ["LICEN[CS]E*"]
+name = "evdsts"
+keywords = [
+    "evds",
+    "edds",
+    "tcmb",
+    "cbot",
+    "econometrics"
+    "macroeconomics",
+]
+requires-python = ">= 3.11"
+version = "1.0rc4"
+
+classifiers = [
+  #   3 - Alpha
+  #   4 - Beta
+  #   5 - Production/Stable
+  "Development Status :: 5 - Production/Stable",
+
+  # Indicate who your project is intended for
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Intended Audience :: Financial and Insurance Industry",
+  "Operating System :: OS Independent",
+  "License :: OSI Approved :: MIT License",
+  "Natural Language :: Turkish",
+  "Natural Language :: English",
+  # Specify the Python versions you support here.
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+
+[project.urls]
+Homepage = "https://github.com/syncoding/evdsts"
+Documentation = "https://github.com/syncoding/evdsts/blob/master/README_EN.md"
+Repository = "https://github.com/syncoding/evdsts.git"
+Issues = "https://github.com/syncoding/evdsts/issues"
+Changelog = "https://github.com/syncoding/evdsts/blob/master/CHANGELOG.md"
+
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+[project.optional-dependencies]
+excel = ["openpyxl",]
+
+[tool.hatch.build]
+exclude = [
+	"docs",
+	"tests",
+	"evdsts/*.json",
+]
+include= [
+    "evdsts",
+	"evdsts/data",
+]
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["linux-64", "win-64"]
+
+[tool.pixi.dependencies]
+pandas = ">=2.0.0"
+requests = ">=2.12.15"
+
+[tool.pixi.pypi-dependencies]
+evdsts = { path = ".", editable = true }
+
+[tool.pixi.tasks]
