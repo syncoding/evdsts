@@ -19,7 +19,7 @@ keywords = [
     "edds",
     "tcmb",
     "cbot",
-    "econometrics"
+    "econometrics",
     "macroeconomics",
 ]
 requires-python = ">= 3.11"
