@@ -23,7 +23,7 @@ keywords = [
     "macroeconomics",
 ]
 requires-python = ">= 3.11"
-version = "1.0rc4"
+version = "1.0rc6"
 
 classifiers = [
   #   3 - Alpha
