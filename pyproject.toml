@@ -62,6 +62,9 @@ excel = ["openpyxl",]
 
 [tool.hatch.build]
 exclude = [
+    "pixi.lock",
+    "pixi.toml",
+    ".gitattributes",
 	"docs",
 	"tests",
 	"evdsts/*.json",

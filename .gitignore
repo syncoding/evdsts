@@ -2,6 +2,7 @@
 **/test.py
 **/evds_series_references.json
 **/evds_api_key.json
+**/pixi.lock
 
 # VS Code
 .vscode/**/*
@@ -69,6 +70,8 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.pixi/*
+!.pixi/config.toml
 
 # Spyder project settings
 .spyderproject
