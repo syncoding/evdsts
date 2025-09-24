@@ -6,6 +6,8 @@ authors = [
 maintainers = [
     { name = "syncoding", email = "synertic@gmail.com" },
 ]
+version = "1.0rc6"
+requires-python = ">=3.11"
 dependencies = [
     "pandas>=2.0.0",
     "requests>=2.12.5",
@@ -22,8 +24,6 @@ keywords = [
     "econometrics",
     "macroeconomics",
 ]
-requires-python = ">= 3.11"
-version = "1.0rc6"
 
 classifiers = [
   #   3 - Alpha
@@ -62,9 +62,8 @@ excel = ["openpyxl",]
 
 [tool.hatch.build]
 exclude = [
-    "pixi.lock",
-    "pixi.toml",
-    ".gitattributes",
+    "uv.lock",
+    ".gitignore",
 	"docs",
 	"tests",
 	"evdsts/*.json",
@@ -73,16 +72,3 @@ include= [
     "evdsts",
 	"evdsts/data",
 ]
-
-[tool.pixi.workspace]
-channels = ["conda-forge"]
-platforms = ["linux-64", "win-64"]
-
-[tool.pixi.dependencies]
-pandas = ">=2.0.0"
-requests = ">=2.12.15"
-
-[tool.pixi.pypi-dependencies]
-evdsts = { path = ".", editable = true }
-
-[tool.pixi.tasks]
