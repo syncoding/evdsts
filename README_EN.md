@@ -115,7 +115,7 @@ conda install evdsts -c conda-forge
 
 | Package | Version |
 |:--------|:--------|
-| Python | >= 3.11 |
+| Python | >= 3.13 |
 | pandas | >= 3.0.0 |
 | requests | >= 2.32.5 |
 | tqdm | >= 4.67.3 |
