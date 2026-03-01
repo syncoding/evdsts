@@ -3,12 +3,13 @@
 __author__ = "Burak CELIK"
 __copyright__ = "Copyright (c) 2022 Burak CELIK"
 __license__ = "MIT"
-__version__ = "1.0rc5"
-__internal__ = "0.0.1"
+__version__ = "0.1.0"
+__mail__ = "synertic@gmail.com"
 
-from datetime import datetime, timedelta
 import re
-from typing import Callable, Optional, Tuple, Union, Sequence, List, Dict
+from datetime import datetime, timedelta
+from typing import Any
+from collections.abc import Callable, Sequence
 
 import numpy as np
 import pandas as pd
@@ -16,7 +17,9 @@ from pandas import Timestamp
 
 from evdsts.configuration.cfg import EVDSTSConfig
 from evdsts.configuration.exceptions import (
-    UndefinedFrequencyException, WrongDateFormatException, WrongDateRangeException
+    UndefinedFrequencyException,
+    WrongDateFormatException,
+    WrongDateRangeException,
 )
 from evdsts.configuration.globals import DATE_SEPARATORS
 from evdsts.configuration.types import DateLike
@@ -24,8 +27,7 @@ from evdsts.configuration.types import DateLike
 config: EVDSTSConfig = EVDSTSConfig()
 
 
-def find_current_date(as_dt: bool = False) -> Union[str, datetime]:
-
+def find_current_date(as_dt: bool = False) -> str | datetime:
     """Returns current date in a format that can be used as an EVDS API parameter.
 
     Args:
@@ -39,18 +41,14 @@ def find_current_date(as_dt: bool = False) -> Union[str, datetime]:
     now: datetime = datetime.now().date()
     if as_dt:
         return now
-    str_now: str = now.strftime('%d-%m-%Y')
+    str_now: str = now.strftime("%d-%m-%Y")
 
     return str_now
 
 
 def parse_dates(
-                str_date: str,
-                fmt: str = '%d-%m-%Y',
-                ignore_errors: bool = False,
-                only_date: bool = True
-                ) -> datetime:
-
+    str_date: str, fmt: str = "%d-%m-%Y", ignore_errors: bool = False, only_date: bool = True
+) -> datetime:
     """Returns a date or datetime object from a given string
 
     Args:
@@ -78,11 +76,10 @@ def parse_dates(
 
 
 def correct_date(datelike: DateLike, use_separator: str = "-") -> str:
-
     """Retruns a corrected date from a given date as complying with EVDS API requirements
 
     Args:
-        - datelike (Union[str, datetime, TimeStamp]): A date like object in any format.
+        - datelike (str | datetime | TimeStamp): A date like object in any format.
             - String Dates: To be corrected with correct_delimiter if it's not separated by
             this charecter.
             - datetime objects: To be corrected as strings that compliying the format
@@ -119,20 +116,20 @@ def correct_date(datelike: DateLike, use_separator: str = "-") -> str:
         # try to parse whatever is given:
         try:
             # strftime is not used because the below can any possible date format correctly.
-            date_list: List[str] = []
+            date_list: list[str] = []
             date_list.append(str(datelike.day) if datelike.day > 9 else "0" + str(datelike.day))
             date_list.append(
                 str(datelike.month) if datelike.month > 9 else "0" + str(datelike.month)
             )
             date_list.append(str(datelike.year))
-            corrected_date = '-'.join(date_list)
+            corrected_date = "-".join(date_list)
         except Exception:
             pass
 
     if not corrected_date:
         raise WrongDateFormatException(
-            f'Given date {datelike} is not in a correct format.\n'
-            f'use a string formed as dd-mm-YY (gg-aa-YYY) or a datetime object'
+            f"Given date {datelike} is not in a correct format.\n"
+            f"use a string formed as dd-mm-YY (gg-aa-YYY) or a datetime object"
         )
 
     # check if any of them is a further date then now
@@ -152,8 +149,7 @@ def correct_date(datelike: DateLike, use_separator: str = "-") -> str:
     return corrected_date
 
 
-def get_period(period: str) -> Tuple[str, str]:
-
+def get_period(period: str) -> tuple[str, str]:
     """Returns a string date period from a given period string
 
     Args:
@@ -165,21 +161,21 @@ def get_period(period: str) -> Tuple[str, str]:
         ValueError: If period string is not a string type
 
     Returns:
-        Tuple[str, str]: string date period
+        tuple[str, str]: string date period
     """
 
     if not isinstance(period, str):
         raise ValueError(
             "period parameter must be a string such as '2y' for indicating last 2 year."
-    )
+        )
 
     # English and Turkish date identifiers for: day, week, month, year
-    date_strings: List[str] = ["d", "w", "m", "y", "g", "h", "a"]
+    date_strings: list[str] = ["d", "w", "m", "y", "g", "h", "a"]
 
     period = period.lower().strip()
 
-    num_pattern: re.Pattern = re.compile(r'\d+')
-    str_pattern: re.Pattern = re.compile(f'{date_strings}', flags=re.IGNORECASE)
+    num_pattern: re.Pattern = re.compile(r"\d+")
+    str_pattern: re.Pattern = re.compile(f"{date_strings}", flags=re.IGNORECASE)
 
     num_match: re.Match = num_pattern.search(period)
     str_match: re.Match = str_pattern.search(period)
@@ -191,15 +187,14 @@ def get_period(period: str) -> Tuple[str, str]:
             f"one of the identified date strings: {date_strings}"
         )
 
-    period_map: Dict[str, Callable[[int], str]] = {
-
+    period_map: dict[str, Callable[[int], str]] = {
         "d": lambda val: correct_date(find_current_date(as_dt=True) - timedelta(days=val)),
         "w": lambda val: correct_date(find_current_date(as_dt=True) - timedelta(weeks=val)),
         "m": lambda val: correct_date(find_current_date(as_dt=True) - timedelta(days=val * 31)),
         "y": lambda val: correct_date(find_current_date(as_dt=True) - timedelta(days=val * 366)),
         "g": lambda val: correct_date(find_current_date(as_dt=True) - timedelta(days=val)),
         "h": lambda val: correct_date(find_current_date(as_dt=True) - timedelta(weeks=val)),
-        "a": lambda val: correct_date(find_current_date(as_dt=True) - timedelta(days=val * 31))
+        "a": lambda val: correct_date(find_current_date(as_dt=True) - timedelta(days=val * 31)),
     }
 
     num_part: int = int(num_match.group(0))
@@ -220,7 +215,6 @@ def get_period(period: str) -> Tuple[str, str]:
 
 
 def convert_to_business_date(datelike: DateLike, use_separator: str = "-") -> str:
-
     """Checks given date if it's a business date and converts to nearest bdate if not.
 
     Args:
@@ -238,7 +232,7 @@ def convert_to_business_date(datelike: DateLike, use_separator: str = "-") -> st
     if not datelike:
         return datelike
 
-    format_ = f'%d{use_separator}%m{use_separator}%Y'
+    format_ = f"%d{use_separator}%m{use_separator}%Y"
     if isinstance(datelike, str):
         try:
             check_datelike: datetime = datetime.strptime(datelike, format_).date()
@@ -258,13 +252,12 @@ def convert_to_business_date(datelike: DateLike, use_separator: str = "-") -> st
 
 
 def as_real(
-            df: pd.DataFrame,
-            dtype: str,
-            columns: Optional[Union[str, Sequence[str]]] = None,
-            convert_to_na: Optional[Union[str, Sequence[str]]] = "ND",
-            exclude_columns: Optional[Union[str, Sequence[str]]] = ('tarih', 'date', 'yearweek')
-            ) -> pd.DataFrame:
-
+    df: pd.DataFrame,
+    dtype: str,
+    columns: str | Sequence[str] | None = None,
+    convert_to_na: str | Sequence[str] | None = "ND",
+    exclude_columns: str | Sequence[str] | None = ("tarih", "date", "yearweek"),
+) -> pd.DataFrame:
     """Returns a DataFrame as casting all number like values into a given real number type
     for whole DataFrame or for only given column. It guarantees all types can be casted into
     the dtype is converted to given dtype befeore returning. The datelike fields in DataFrame
@@ -276,15 +269,15 @@ def as_real(
         - dtype (str): The data type that will be used to cast into.
             - 'int8', 'int16', 'int32', 'int64'
             - 'float16', 'float32', 'float64'
-        - columns (Optional[Union[str, Sequence[str]]], optional): A specific column or columns
+        - columns (Optional[str | Sequence[str]], optional): A specific column or columns
         of the given
         DataFrame object. Could be given as string or a Sequence type like List or Tuple.
         Defaults to None.
-        - convert_to_na (Optional[Union[str, Sequence[str]]]): Strings that are converted to np.na
+        - convert_to_na (Optional[str | Sequence[str]]): Strings that are converted to np.na
         as a floating number.
             - can be given as a string
             - can be given as a sequence of strings.
-        - exclude_columns (Optional[Union[str, Sequence[str]]]): Exclude columns from type casting
+        - exclude_columns (Optional[str | Sequence[str]]): Exclude columns from type casting
             - can be given as a string
             - can be given as a sequence of strings
 
@@ -297,24 +290,21 @@ def as_real(
     """
 
     def cast_type(column: pd.Series):
-
         """the mapping function that guarantees all the series can be cast into given type is
         converted."""
 
         try:
             # try type casting into given dtype.
-            casted: pd.Series = column.astype(dtype, errors='raise')
+            casted: pd.Series = column.astype(dtype, errors="raise")
             return casted
         except Exception:
             # not successfull return the same Series object.
             return column
 
-    accepted_types: List[str] = ['int8', 'int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+    accepted_types: list[str] = ["int8", "int16", "int32", "int64", "float16", "float32", "float64"]
 
     if dtype not in accepted_types:
-        raise ValueError(
-            f"dtype must be in {accepted_types}, but you've given {dtype}"
-        )
+        raise ValueError(f"dtype must be in {accepted_types}, but you've given {dtype}")
 
     if convert_to_na:
         if isinstance(convert_to_na, str):
@@ -341,9 +331,8 @@ def as_real(
             df = df.where(~df.isin(convert_to_na), other=np.nan)
 
         if exclude_columns:
-            columns_restricted: List[str] = [
-                name for name in list(df.columns)
-                    if name.lower() not in exclude_columns
+            columns_restricted: list[str] = [
+                name for name in list(df.columns) if name.lower() not in exclude_columns
             ]
             # cast all except datelikes to given dtype
             df[columns_restricted] = df[columns_restricted].iloc[::].apply(cast_type)
@@ -354,13 +343,12 @@ def as_real(
         columns = [columns] if isinstance(columns, str) else list(columns)
         if convert_to_na:
             df[columns] = df[columns].where(~df[columns].isin(convert_to_na))
-        df[columns] = df[columns].astype(dtype, errors='ignore')
+        df[columns] = df[columns].astype(dtype, errors="ignore")
 
     return df
 
 
 def find_datelike_columns(df: pd.DataFrame) -> pd.DataFrame:
-
     """Returns columns which possibly represents index of a time series.
 
     Args:
@@ -370,15 +358,14 @@ def find_datelike_columns(df: pd.DataFrame) -> pd.DataFrame:
         - pd.DataFrame: Columns that could be time series indexes.
     """
 
-    date_identifiers: List[str] = ['tarih', 'date']
-    datelikes: List[str] = [col for col in df if col.lower() in date_identifiers]
+    date_identifiers: list[str] = ["tarih", "date"]
+    datelikes: list[str] = [col for col in df if col.lower() in date_identifiers]
     datelike_columns: pd.DataFrame = df[datelikes]
 
     return datelike_columns
 
 
 def crete_ts_index(df: pd.DataFrame, method: str) -> pd.Series:
-
     """Returns a date range that it's frequency exactly fits in the supplied DataFrame.
 
     Args:
@@ -393,8 +380,7 @@ def crete_ts_index(df: pd.DataFrame, method: str) -> pd.Series:
     #! only string indexes. Therefore, I'm going to use this converter instead of using UNIXTIME
     #! against future compatibilities.
 
-    def sniff_format(column: pd.Series) -> List[str]:
-
+    def sniff_format(column: pd.Series) -> list[str]:
         """Returns possible frequencies that may belong to given series' as sniffing
         supplied data to detect it's frequency.
 
@@ -402,25 +388,25 @@ def crete_ts_index(df: pd.DataFrame, method: str) -> pd.Series:
             - column (pd.Series): datelike series objects.
 
         Returns:
-            - List[str]: A list of possible frequencies that given series could be fit.
+            - list[str]: A list of possible frequencies that given series could be fit.
         """
 
         test_series: pd.Series
         test: bool = False
         # get a small sample from time series to sniff date format.
-        sample: pd.Series = column.dropna(how='all').head(10)
+        sample: pd.Series = column.dropna(how="all").head(10)
         # try to sniff date format from that sample using all defined regex patterns.
         # an API returned series can be matched with more than one format like;
         # daily frequency can be matched with both daily, business daily, weekly, etc.
         # detect all possible formats for the data in question.
-        possible_formats: List[str] = []
+        possible_formats: list[str] = []
         for key, patterns in regexes.items():
             for pattern in patterns:
                 test_series = sample.apply(
                     lambda datelike, pattern=pattern: bool(re.match(pattern, str(datelike)))
                 )
                 # greedy sniff looks for any value in series is matched to given pattern
-                if method == 'greedy':
+                if method == "greedy":
                     test = test_series.any()
                 # lazy sniff chacks if all values in series are matched to given pattern
                 else:
@@ -431,7 +417,7 @@ def crete_ts_index(df: pd.DataFrame, method: str) -> pd.Series:
         return possible_formats
 
     # load all sniffing regexes that can detect EVDS API returned date identifiers.
-    regexes: Dict[str, List[str]] = config.frequency_regexes
+    regexes: dict[str, list[str]] = config.frequency_regexes
     # create possible formats as sniffing them using a small sample of data.
     # aggregate all results for individual datelike series that could possibly be time series.
     possible_date_frequencies: pd.Series = df.agg(sniff_format)
@@ -439,14 +425,20 @@ def crete_ts_index(df: pd.DataFrame, method: str) -> pd.Series:
     index: pd.Series = pd.Series(dtype="object")
     first: str = None  # first record of series
     last: str = None  # last record of series
-    splitted_first: List[str] = []  # splitted first record of series by date separator
-    splitted_last: List[str] = []  # splitted last record of series by date separator
+    splitted_first: list[str] = []  # splitted first record of series by date separator
+    splitted_last: list[str] = []  # splitted last record of series by date separator
     start: str = None  # starting date of date range
     end: str = None  # ending date of date range
     # date range frequencies corresponding to determined frequencies.
-    frequency_map: Dict[str, str] = dict(
-        daily="D", bdaily="B", weekly="W", semimonthly="SM",
-        monthly="ME", quarterly="Q", semiyearly="6M", yearly="Y"
+    frequency_map: dict[str, str] = dict(
+        daily="D",
+        bdaily="B",
+        weekly="W",
+        semimonthly="SM",
+        monthly="ME",
+        quarterly="Q",
+        semiyearly="6M",
+        yearly="Y",
     )
 
     # iterate through all sniffed date formats to determine which one is correct.
@@ -477,7 +469,7 @@ def crete_ts_index(df: pd.DataFrame, method: str) -> pd.Series:
 
             # for semiyearly data, find first half and create a half more of the last
             # to include current half
-            if freq == '6M':
+            if freq == "6M":
                 # check for all possible date separators in case of the API changes
                 # in the future.
                 for separator in config.date_separators:
@@ -491,7 +483,7 @@ def crete_ts_index(df: pd.DataFrame, method: str) -> pd.Series:
                 # extract digits from the half identifier.
                 extract_half_pattern: str = r"\d+"
                 # for start
-                extract_half: List[str] = re.findall(extract_half_pattern, splitted_first[1])
+                extract_half: list[str] = re.findall(extract_half_pattern, splitted_first[1])
                 if len(extract_half):
                     start = splitted_first[0] + "-" + str(extract_half[0])
                 else:
@@ -518,7 +510,7 @@ def crete_ts_index(df: pd.DataFrame, method: str) -> pd.Series:
 
                 extract_half_pattern: str = r"\d+"
                 # for start
-                extract_half: List[str] = re.findall(extract_half_pattern, splitted_first[1])
+                extract_half: list[str] = re.findall(extract_half_pattern, splitted_first[1])
                 if len(extract_half):
                     start = splitted_first[0] + "-Q" + str(extract_half[0])
                 else:
@@ -543,7 +535,7 @@ def crete_ts_index(df: pd.DataFrame, method: str) -> pd.Series:
 
                 extract_half_pattern: str = r"\d+"
                 # for start
-                extract_half: List[str] = re.findall(extract_half_pattern, splitted_first[1])
+                extract_half: list[str] = re.findall(extract_half_pattern, splitted_first[1])
                 if len(extract_half):
                     start = splitted_first[0] + "-" + str(extract_half[0])
                 else:
@@ -551,8 +543,26 @@ def crete_ts_index(df: pd.DataFrame, method: str) -> pd.Series:
                 # for end
                 extract_half = re.findall(extract_half_pattern, splitted_last[1])
                 if str(extract_half[0]) in (
-                    "01", "1", "02", "2", "03", "3", "04", "4", "05", "5", "06", "6",
-                    "07", "7", "08", "8", "09", "9", "10", "11"
+                    "01",
+                    "1",
+                    "02",
+                    "2",
+                    "03",
+                    "3",
+                    "04",
+                    "4",
+                    "05",
+                    "5",
+                    "06",
+                    "6",
+                    "07",
+                    "7",
+                    "08",
+                    "8",
+                    "09",
+                    "9",
+                    "10",
+                    "11",
                 ):
                     end = str(int(splitted_last[0])) + "-" + str(int(extract_half[0]) + 1)
                 elif str(extract_half[0]) in ("12",):
@@ -607,11 +617,7 @@ def crete_ts_index(df: pd.DataFrame, method: str) -> pd.Series:
     return index
 
 
-def convert_to_time_series(
-                           df: pd.DataFrame,
-                           method: str = 'greedy'
-                           ) -> pd.DataFrame:
-
+def convert_to_time_series(df: pd.DataFrame, method: str = "greedy") -> pd.DataFrame:
     """Tries to convert given DataFrame to time series and returns it.
 
     Args:
@@ -638,6 +644,6 @@ def convert_to_time_series(
         # time series index is created successfully.
         df.set_index(index, inplace=True)
         df.drop(datelike_columns.columns, axis=1, inplace=True)
-        df.index.name = 'Date'
+        df.index.name = "Date"
 
     return df

@@ -1361,30 +1361,51 @@ Data is written on g:\My Drive\Dev\Active\evdsts\data_2022_08_12_214320.json
 
 <a id="updating-index"></a>
 
-### __Updating Local Searh Index__
+### __Updating Local Search Index__
 
-`evdsts` uses a local index to search series names in EDDS. The local index possibly be outdated
-after several months from creation date because of the series updates done in EDDS itself. You can
-update the local index every several months in order its to be in sync with EDDS.
+`evdsts` uses a local index to search series names in EVDS. The local index possibly be outdated
+after several months from creation date because of the series updates done in EVDS itself. You can
+update the local index every several months in order its to be in sync with EVDS.
 
-__Cases__:
+__Using the CLI (Recommended)__:
+
+The easiest way to rebuild the search index is via the `evdsts` command-line tool:
+
+```bash
+# rebuild the Turkish index (default)
+evdsts build-index
+
+# rebuild the English index
+evdsts build-index --language ENG
+
+# skip confirmation prompt
+evdsts build-index -y
+
+# provide API key directly
+evdsts build-index --key YOUR_API_KEY --language ENG -y
+
+# adjust wait time between API requests (default: 5 seconds, minimum: 5)
+evdsts build-index --wait 7
+```
+
+__Using Python__:
+
+You can also rebuild the index programmatically using the `IndexBuilder` class:
 
 ```python
-
-# You need the IndexBuilder class of evdsts for updating the local search index.
 from evdsts import IndexBuilder
 
-# create a builder instance like below.
+# create a builder instance
 builder = IndexBuilder('YOUR_API_KEY', language="EN")
 
-# you can check how old the local index is in days.
+# check how old the local index is in days
 print(builder.index_age_in_days)
 
-# rebuild the index if it's been a long time (like months) since it's created.
+# rebuild the index
 builder.build_index()
 ```
 
-> __Please note that rebuilding the local search index takes around 30 minutes because the builder waits__
+> __Please note that rebuilding the local search index takes around 60 minutes because the builder waits__
 > __a reasonable amount of time (min. 5 secs.) between every new connection it establishes in order__
 > __not to overload the API service with frequent requests.__
 

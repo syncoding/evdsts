@@ -1,136 +1,146 @@
-# <img src="https://github.com/syncoding/evdsts/blob/master/docs/images/evdsts.png?raw=true" width="5%"/> evdsts
+<p align="center">
+  <img src="https://github.com/syncoding/evdsts/blob/master/docs/images/evdsts.png?raw=true" width="120"/>
+</p>
 
- [![PyPI version](https://badge.fury.io/py/evdsts.svg)](https://pypi.org/project/evdsts/)
- [![PyPI - Downloads](https://img.shields.io/pypi/dm/evdsts)](https://pypistats.org/packages/evdsts)
- [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/evdsts)](https://pypi.org/project/evdsts/)
- [![PyPI - Status](https://img.shields.io/pypi/status/evdsts)](https://pypi.org/project/evdsts/)
- [![GitHub - License](https://img.shields.io/github/license/syncoding/evdsts)](https://github.com/syncoding/evdsts/blob/master/LICENSE.txt)
- [![GitHub issues](https://img.shields.io/github/issues-raw/syncoding/evdsts)](https://github.com/syncoding/evdsts/issues)
- [![GitHub top language](https://img.shields.io/github/languages/top/syncoding/evdsts)](https://github.com/syncoding/evdsts)
- [![GitHub Fork](https://img.shields.io/github/forks/syncoding/evdsts?style=social)](https://img.shields.io/github/forks/syncoding/evdsts?style=social)
+<h1 align="center">evdsts</h1>
 
+<p align="center">
+  <strong>TCMB EVDS makroekonomik zaman serisi araç takımı</strong>
+</p>
 
-### [__Click here to access the English version of this document__](/README_EN.md)
-## __Amaç__
+<p align="center">
+  <a href="https://pypi.org/project/evdsts/"><img src="https://badge.fury.io/py/evdsts.svg" alt="PyPI version"></a>
+  <a href="https://pypistats.org/packages/evdsts"><img src="https://img.shields.io/pypi/dm/evdsts" alt="Downloads"></a>
+  <a href="https://pypi.org/project/evdsts/"><img src="https://img.shields.io/pypi/pyversions/evdsts" alt="Python Version"></a>
+  <a href="https://pypi.org/project/evdsts/"><img src="https://img.shields.io/pypi/status/evdsts" alt="Status"></a>
+  <a href="https://github.com/syncoding/evdsts/blob/master/LICENSE.txt"><img src="https://img.shields.io/github/license/syncoding/evdsts" alt="License"></a>
+  <a href="https://github.com/syncoding/evdsts/issues"><img src="https://img.shields.io/github/issues-raw/syncoding/evdsts" alt="Issues"></a>
+  <a href="https://github.com/syncoding/evdsts"><img src="https://img.shields.io/github/languages/top/syncoding/evdsts" alt="Top Language"></a>
+  <a href="https://github.com/syncoding/evdsts"><img src="https://img.shields.io/github/forks/syncoding/evdsts?style=social" alt="Forks"></a>
+</p>
 
-`evdsts` __Türkiye Cumhuriyet Merkez Bankası__ __Elektronik Veri Dağıtım Sistemi__ __(EVDS)__ API
-üzerinden makroekonomik veri alımı için geliştirilmiş bir Python uyarlamasıdır. `evdsts`, verdiği
-zaman serileri analizine hazır çıktılar ve diğer faydalı dönüşümleriyle; hem veri alımını hem de
-zaman serileri anzlizlerini kolaylaştırmak için dizayn edilmiştir.
+<p align="center">
+  <a href="/README_EN.md"><strong>Click here to access the English version of this document</strong></a>
+</p>
 
-## __Tanıtım__
+---
 
-`evdsts` genel olarak __EVDS__'den alınan veriden, zaman serileri analizlerine hazır veri setleri
-hazırlamak için dizayn edilmiştir. `evdsts`, gelişmiş özellikleri ve veri üzerinde size verdiği
-kontrol sayesinde hem veri alımını kolaylaştırır hem de veri alınır alınmaz üzerinde çalışmaya
-başlamanızı sağlar.
+## Amac
 
-`evdsts` iki önemli sınıftan oluşmuştur:
-1. `Connector`: EVDS'ye bağlantı, veri indirme, isimlendirme gibi süreçleri üstlenir.
-2. `Transformator`: `Connector` tarafından alınan veri ile tam uyumlu çalışır ve zaman serileri
-analizinde size veri hakkında ön fikirler verebilecek bazı yararlı dönüşümleri yapar.
+`evdsts` **Turkiye Cumhuriyet Merkez Bankasi** **Elektronik Veri Dagitim Sistemi** **(EVDS)** API
+uzerinden makroekonomik veri alimi icin gelistirilmis bir Python uyarlamasidir. `evdsts`, verdigi
+zaman serileri analizine hazir ciktilar ve diger faydali donusumleriyle; hem veri alimini hem de
+zaman serileri analizlerini kolaylastirmak icin dizayn edilmistir.
 
-`evdsts`'nin bazı önemli özellikleri aşağıda verilmiştir:
+## Genel Bakis
 
-- `evdsts` ile alınan veri üzerinde; z-skor serisi hesaplama, kukla değişken serileri oluşturma,
-dışa düşen verilerin tespiti, fark serileri oluşturma gibi bazı dönüşümleri veri alınır alınmaz
-kolayca yapılabilir. Bu dönüşümlerden sorumlu olan`Transformator` sınıfı, `Connector` sınıfı
-tarafından oluşturulan veri ile tam uyumlu olarak çalışması için dizayn edilmiştir.
-- İndirmek istediğiniz serilerin isimlerini aramak için EVDS web sitesini ziyaret etmenize gerek
-kalmadan `evdsts` içinde anahtar kelimeler ile seri tanımlarını arayabilirsiniz. Aramalar lokal
-olarak (disk üzerinde) yapılır ve anında sonuç verir.
-- `evdsts` geri döndürdüğü verinin başka hiçbir dönüşüme gerek kalmadan matematiksel süreçlerde
-kullanılabilir olmasını sağlar. Bu, aslında bir `datetime`, `float` ya da `int` gibi  matematiksel
-bir veri türünü ifade hiçbir verinin bir `string` veri olarak geri dönmemesini garanti eder.
-- Alınan tüm veri otomatik olarak gerçek zaman serilerine dönüştürülür (seçimli, kapatılabilir)
-- Servisten veri almak için EVDS'nin karmaşık seri etiketlerinin bilinmesine gerek yoktur. `evdsts`
-size  _tüfe_, _faiz_, _gsmh_ ve _usdtry_ gibi anlamlı isimlerin seri isimleri olarak atama özgürlüğü
-verir ve bu atanan isimler EVDS'den veri almak için kullanılır. Kullanıcı tarafından atanan isimler
-referans isimler olarak adlandırılır ve silinmedikleri ya da değiştirilmedikleri sürece kalıcıdırlar.
-Ek olarak, mevcut bir projedeki referans isimler kolayca başka bir projeye taşınabilir.
-- Bütün transformasyon ve yığılma fonksiyonları ve frekansla parametreleri `daily`, `quarterly`,
-`percent`, `diff`, `max`, vs. gibi anlamlı parametrelere dönüştürülmüştür. Böylece artık EVDS'nin
-transformasyon ve yığılma fonksiyonları ve zaman serileri frekansları için atadığı karmaşık parametre
-haritasını bilmeye gerek yoktur.
-- `evdsts`, EVDS'ye bağlantı yapılmadan önce bir çok hatayı tespit edebilir ve sizi uyarabilir. Bu,
-niçin verilen parametrelere veri alınamayacağını ya da verilen parametrelerin niçin belirsizlik
-yarattığını bilmenize olanak tanır.
-- `evdsts`, veri üzerinde log-return serileri ya da 2., 3., n. seviye fark serileri gibi API
-tarafından desteklenmeyen fakat zaman seri analizlerinde sıklıkla kullanılan dönüşümleri yapabilmenizi
-sağlar.
-- Alınan tüm veriler `DataFrame`, `JSON` ya da `dict` sınıfları olarak isteğe bağlı biçimde geri
-döndürülebilir.
-- Alınan tüm veriler daha sonra kullanılmak üzere saklanmak ya da; R, EViews, SAS ya da RATS gibi
-diger analiz uygulamarında kullanılmak üzere `JSON`, `CSV` ve `XLS` formatında diske yazılabilir.
-- Tüm fonksiyon ve sınıf metotlarının anotasyonu yapılmıştır. Bu sayede;  Spyder IDE, Pycharm,
-VS Code ya da Jupyter üzerinde kullanmak istediğiniz herhangi bir fonksiyon hakkında anlık yardım
-alabilirsiniz.
-- Geliştiricilerin kaynak kod üzerinde çalışmasını kolaylaştırmak için kaynak kod içinde tüm değişken
-tiplerinin anotasyonu (gerekli yorumlarla birlikte) yapılmıştır.
+`evdsts` genel olarak **EVDS**'den alinan veriden, zaman serileri analizlerine hazir veri setleri
+hazirlamak icin dizayn edilmistir. `evdsts`, gelismis ozellikleri ve veri uzerinde size verdigi
+kontrol sayesinde hem veri alimini kolaylastirir hem de veri alinir alinmaz uzerinde calismaya
+baslamanizi saglar.
 
-## __Dökümanlar__
+`evdsts` iki onemli siniftan olusmaktadir:
 
-`evdsts`'yi nasıl kullanacağınızı ve EVDS'ye bağlantı için gereken API anahtarını nasıl alacağınızı
-detaylı olarak öğrenmek için:  
-[__KULLANICI EL KITABI (TR)__](https://github.com/syncoding/evdsts/blob/master/docs/manuals/manual_tr.md) ya da  
-[__THE USER MANUAL (EN)__](https://github.com/syncoding/evdsts/blob/master/docs/manuals/manual_en.md)  
-dökümanlarına göz atın.
+| Sinif | Sorumluluk |
+|:------|:-----------|
+| **Connector** | EVDS'ye baglanti, veri indirme, isimlendirme vb. islemler. |
+| **Transformator** | z-skor, kukla degisken, aykiri deger tespiti, fark alma gibi entegre donusumler. |
 
-## __Örnekler__ [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/syncoding/evdsts/blob/master/examples/ornekler.ipynb)
+### Temel Ozellikler
 
-Ana kullanım senaryolarını içeren [__Jupyter Notebook Uygulaması__](https://github.com/syncoding/evdsts/blob/master/examples/)'nı indirin ya da yukarıdaki _Open in Colab_ linkini kullanarak uygulamayı __Google Colab__ üzerinde açın.
+- **Yerinde arama** -- Python'dan cikmadan anahtar kelimelerle seri arayabilirsiniz; sonuclar anlik ve lokaldir.
+- **Analize hazir ciktilar** -- donen her deger uygun sayisal veya datetime turudur, asla ham string degildir.
+- **Otomatik zaman serisi endeksleme** -- cekilen veriler otomatik olarak gercek pandas DatetimeIndex serilerine donusturulur (secimli).
+- **Referans isimler** -- karmasik EVDS kodlarina `usdtry` veya `tufe` gibi akilda kalici takma adlar atayin; takma adlar kalici ve projeler arasi tasinabilirdir.
+- **Okunabilir parametreler** -- gizemli API kodlari yerine `daily`, `quarterly`, `percent`, `diff`, `max` gibi anlamli argümanlar kullanin.
+- **On dogrulama** -- bircok parametre hatasi herhangi bir ag istegi yapilmadan once yakalanir.
+- **Genisletilmis donusumler** -- API tarafindan desteklenmeyen log-getiri, yuksek dereceli farklar ve diger islemler.
+- **Esnek cikti** -- sonuclari `DataFrame`, `JSON` veya `dict` olarak alin; CSV, JSON veya XLSX olarak diske yazin.
+- **CLI destegi** -- komut satirindan `evdsts build-index` ile lokal arama indekslerini güncelleyin.
+- **Tam anotasyon** -- IDE otomatik tamamlama ve hizli yardim icin her yerde type hinting ve tum fonksiyonlar icin docstringler eklenmistir.
 
+## Hizli Baslangic
 
-## __Gereklilikler__
+```python
+from evdsts import Connector
 
-`evdsts` bir __Python 3__ projesidir ve aşağıda sıralananlar gereklidir:
+connector = Connector("API_ANAHTARINIZ", language="TR")
 
-1. cpython >= 3.11.0 (ya da eşdeğer PyPy sürümü)
-1. pandas >= 2.0.0
-2. requests >= 2.12.0
+# seri arama
+connector.where("tuketici fiyat endeksi")
 
-## __Ek Gereklilikler__
+# veri cekme
+tufe = connector.get_series("TP.FE.OKTG01", start_date="01.01.2020")
 
-Alınan verileri MS Excel formatında diske kaydetmeyi düşünüyorsanız [__openpyxl__](https://pypi.org/project/openpyxl/)
-paketi gereklidir. Eğer MS Excel dosyaları ile çalışmayı düşünmüyorsanız openpyxl bağımlılığı yoktur.
-
-## __Kurulum__
-
-`evdsts`'nin stabil sürümü GitHub, PyPI ve conda-forge üzerinde bulunur ve aşağıdaki yollardan
-herhangi biri kullanılarak kurulum gerçekleştirilebilir.
-
-### __PyPI__
-
+# coklu seri cekme
+kurlar = connector.get_series(
+    "TP.DK.USD.A.YTL, TP.DK.EUR.A.YTL",
+    start_date="01.01.2023",
+    frequency="M",
+    transformations="percent",
+)
 ```
+
+## CLI Kullanimi
+
+```bash
+# arama indeksini yeniden olustur
+evdsts build-index -y
+
+# tum secenekleri gor
+evdsts build-index --help
+```
+
+## Dokumanlar
+
+`evdsts`'yi nasil kullanacaginizi ve EVDS'ye baglanti icin gereken API anahtarini nasil alacaginizi
+detayli olarak ogrenmek icin:
+
+| | |
+|:--|:--|
+| Turkce | [**KULLANICI EL KITABI (TR)**](https://github.com/syncoding/evdsts/blob/master/docs/manuals/manual_tr.md) |
+| English | [**THE USER MANUAL (EN)**](https://github.com/syncoding/evdsts/blob/master/docs/manuals/manual_en.md) |
+
+## Ornekler [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/syncoding/evdsts/blob/master/examples/ornekler.ipynb)
+
+Ana kullanim senaryolarini iceren [**Jupyter Notebook Uygulamasi**](https://github.com/syncoding/evdsts/blob/master/examples/)'ni indirin ya da yukaridaki *Open in Colab* linkini kullanarak uygulamayi **Google Colab** uzerinde acin.
+
+## Kurulum
+
+`evdsts`'nin stabil surumu GitHub, PyPI ve conda-forge uzerinde bulunur.
+
+```bash
+# PyPI
 pip install evdsts
-```
 
-### __GitHub__
-
-```
+# GitHub
 pip install git+https://github.com/syncoding/evdsts.git
-```
 
-### __Conda__
-
-```
+# Conda
 conda install evdsts -c conda-forge
 ```
 
-## __Kaynak Kod__
+## Bagimliliklar
 
-[GitHub](https://github.com/syncoding/evdsts/blob/master/evdsts)
+| Paket | Surum |
+|:------|:------|
+| Python | >= 3.11 |
+| pandas | >= 3.0.0 |
+| requests | >= 2.32.5 |
+| tqdm | >= 4.67.3 |
 
-## __Versiyon Değişiklik Günlüğü__
-[__Changelog__](https://github.com/syncoding/evdsts/blob/master/CHANGELOG.md)
+> Alinan verileri MS Excel formatinda diske kaydetmeyi dusunuyorsaniz [openpyxl](https://pypi.org/project/openpyxl/) ek olarak gereklidir.
 
-## __Lisans__
+## Baglantilar
 
-[__MIT__](https://github.com/syncoding/evdsts/blob/master/LICENSE.txt)
+| | |
+|:--|:--|
+| Kaynak Kod | [GitHub](https://github.com/syncoding/evdsts/blob/master/evdsts) |
+| Degisiklik Gunlugu | [CHANGELOG.md](https://github.com/syncoding/evdsts/blob/master/CHANGELOG.md) |
+| Lisans | [MIT](https://github.com/syncoding/evdsts/blob/master/LICENSE.txt) |
 
-## __İletişim__
+## Iletisim
 
 <a href="mailto:synertic@gmail.com?"><img src="https://img.shields.io/badge/gmail-%23DD0031.svg?&style=for-the-badge&logo=gmail&logoColor=white"/></a>
 
 [Telegram](https://t.me/synertic)
-

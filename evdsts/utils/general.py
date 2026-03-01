@@ -3,31 +3,30 @@
 __author__ = "Burak CELIK"
 __copyright__ = "Copyright (c) 2022 Burak CELIK"
 __license__ = "MIT"
-__version__ = "1.0rc5"
-__internal__ = "0.0.1"
+__version__ = "0.1.0"
+__mail__ = "synertic@gmail.com"
 
 import csv
-from datetime import datetime, date
-from io import StringIO
 import json
-from json import JSONDecodeError, JSONEncoder
-from pathlib import Path
 import shutil
 import sys
-from typing import Any, Dict, List, Optional, Sequence, Union, TextIO
-
+from collections.abc import Sequence
+from datetime import date, datetime
+from io import StringIO
+from json import JSONDecodeError, JSONEncoder
+from pathlib import Path
+from typing import Any, TextIO
 
 import pandas as pd
 
-
 from evdsts.configuration.exceptions import (
-    UnmatchingFieldSizeException, OptionalPackageRequiredException
+    OptionalPackageRequiredException,
+    UnmatchingFieldSizeException,
 )
 from evdsts.configuration.types import JSONType
 
 
 def is_numeric(string: str) -> bool:
-
     """Returns if given number is an int or float
 
     Args:
@@ -44,13 +43,12 @@ def is_numeric(string: str) -> bool:
     return True
 
 
-def copy_file(source: Union[str, Path], target: Union[str, Path], verbose: bool = True) -> None:
-
+def copy_file(source: str | Path, target: str | Path, verbose: bool = True) -> None:
     """Copies a file from source to target.
 
     Args:
-        source (Union[str, Path]): source file name
-        target (Union[str, Path]): target file name
+        source (str | Path): source file name
+        target (str | Path): target file name
         verbose (bool, optional): text output for result. Defaults to True.
     """
 
@@ -70,11 +68,10 @@ def copy_file(source: Union[str, Path], target: Union[str, Path], verbose: bool 
         raise
 
     if verbose:
-        print(f'\nsuccess: {source} --> {target}')
+        print(f"\nsuccess: {source} --> {target}")
 
 
 def delete_file(fname: str, raise_errors: bool = False) -> None:
-
     """Clears name references.
 
     Args:
@@ -94,26 +91,20 @@ def delete_file(fname: str, raise_errors: bool = False) -> None:
         raise
 
 
-def write_json(fname: str, reference_dict: Dict[str, str]) -> None:
-
+def write_json(fname: str, reference_dict: dict[str, str]) -> None:
     """Writes reference file to disk.
 
     Args:
         fname (str): file name to be written.
-        reference_dict (Dict[str, str]): Dictionary to be written.
+        reference_dict (dict[str, str]): Dictionary to be written.
     """
 
     class CustomEncoder(JSONEncoder):
-
         """A custom JSON encoder for serializing datetime fields in given dictionary"""
 
-        def __init__(self, *args, **kwargs) -> None:
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
 
-            super().__init__(
-                            skipkeys=True,
-                            allow_nan=True,
-                            ensure_ascii=False
-                            )
+            super().__init__(skipkeys=True, allow_nan=True, ensure_ascii=False)
 
         def default(self, arg: Any) -> str:
 
@@ -124,22 +115,16 @@ def write_json(fname: str, reference_dict: Dict[str, str]) -> None:
 
     with open(fname, "w", encoding="utf-8") as f:
         json.dump(
-            reference_dict,
-            f,
-            ensure_ascii=False,
-            skipkeys=True,
-            allow_nan=True,
-            cls=CustomEncoder
+            reference_dict, f, ensure_ascii=False, skipkeys=True, allow_nan=True, cls=CustomEncoder
         )
 
 
-def load_json(text: Union[str, bytes], field: Optional[str] = None) -> JSONType:
-
+def load_json(text: str | bytes, field: str | None = None) -> JSONType:
     """Returns JSON data from a given literal.
 
     Args:
-        - text (Union[str, bytes]): A string or byte object.
-        - field (Optional[str]): a specific field to be returned.
+        - text (str | bytes): A string or byte object.
+        - field (str | None): a specific field to be returned.
 
     Returns:
         - JSONType: JSON type object.
@@ -161,13 +146,12 @@ def load_json(text: Union[str, bytes], field: Optional[str] = None) -> JSONType:
 
 
 def write_excel(
-                df: pd.DataFrame,
-                fname: Path,
-                sheet_name: str = "evds_data",
-                float_format: str = "%.4f",
-                verbose: bool = False
-                ) -> bool:
-
+    df: pd.DataFrame,
+    fname: Path,
+    sheet_name: str = "evds_data",
+    float_format: str = "%.4f",
+    verbose: bool = False,
+) -> bool:
     """Writes a Pandas DataFrame object on disk in MS Excel Format.
 
     Args:
@@ -201,16 +185,15 @@ def write_excel(
 
 
 def write_data(
-               data: Union[pd.DataFrame, JSONType, Dict],
-               data_format: str = "csv",
-               filename: Optional[str] = None,
-               delimiter: str = ";",
-               ) -> None:
-
+    data: pd.DataFrame | JSONType | dict[str, Any],
+    data_format: str = "csv",
+    filename: str | None = None,
+    delimiter: str = ";",
+) -> None:
     """Tries hard to save the given data on disk in various formats.
 
     Args:
-        - data ([Union[pd.DataFrame, JSONType, Dict]]): The data to be written on disk.
+        - data ([pd.DataFrame | JSONType | dict]): The data to be written on disk.
             - can be given in Pandas DataFrame
             - can be given in JSONType raw data
             - can be given in dictionary.
@@ -218,7 +201,7 @@ def write_data(
             - for csv file format: "csv"
             - for Excel format: "excel", "xls", or "xlsx"
             - for raw format: "raw" or "json"
-        - filename (Optional[str], optional): Output filename. Defaults to None.
+        - filename (str | None, optional): Output filename. Defaults to None.
             - The bare filename for output. Output file is always saved on current
             working directory. Therefore, the given filename shoul be just the bare
             filename like "cppi" or "unemployment".
@@ -233,41 +216,37 @@ def write_data(
 
     if isinstance(data, (pd.DataFrame, pd.Series)):
         if data.empty:
-            print(
-                'Given DataFrame is empty or nothing has been gotten from the API service yet...'
-            )
+            print("Given DataFrame is empty or nothing has been gotten from the API service yet...")
             return
         frame_data = True
     elif isinstance(data, (str, bytes, list)):
         try:
-            test_cast: JSONType = json.dumps(data, skipkeys=True, allow_nan=True, ensure_ascii=False)
+            test_cast: JSONType = json.dumps(
+                data, skipkeys=True, allow_nan=True, ensure_ascii=False
+            )
         except Exception:
-            raise TypeError('Given data is not a writable JSONType') from None
+            raise TypeError("Given data is not a writable JSONType") from None
         json_data = True
     elif isinstance(data, dict):
         dict_data = True
 
     if data_format not in ("excel", "xls", "xlsx", "raw", "json", "csv"):
         print(
-            f"Given data format {data_format} is not supported."
-            f"Allowed formats: [csv, excel, json] "
+            f"Given data format {data_format} is not supported.Allowed formats: [csv, excel, json] "
         )
         return
 
     written: bool = False
 
     data_format = data_format.lower()
-    dt: str = datetime.now().strftime('%Y_%m_%d_%H%M%S')
+    dt: str = datetime.now().strftime("%Y_%m_%d_%H%M%S")
     name: str = "data" + "_" + dt if not filename else filename.split(".")[0]
     fname: Path = Path.cwd() / name
 
     if data_format in ("raw", "json"):
-
         fname = fname.with_suffix(".json")
         if json_data:
-            json_str: JSONType = json.dumps(
-                data, skipkeys=True, allow_nan=True, ensure_ascii=False
-            )
+            json_str: JSONType = json.dumps(data, skipkeys=True, allow_nan=True, ensure_ascii=False)
             stream_like: TextIO = StringIO(json_str)
             df: pd.DataFrame = pd.read_json(stream_like, encoding="utf-8")
             df.to_json(fname)
@@ -286,15 +265,12 @@ def write_data(
                 written = True
 
     elif data_format == "csv":
-
         fname = fname.with_suffix(".csv")
         if frame_data:
             data.to_csv(fname, sep=delimiter, encoding="utf-8", float_format="%.4f")
             written = True
         if json_data:
-            json_str: JSONType = json.dumps(
-                data, skipkeys=True, allow_nan=True, ensure_ascii=False
-            )
+            json_str: JSONType = json.dumps(data, skipkeys=True, allow_nan=True, ensure_ascii=False)
             stream_like: TextIO = StringIO(json_str)
             df: pd.DataFrame = pd.read_json(stream_like, encoding="utf-8")
             df.to_csv(fname, sep=delimiter, encoding="utf-8", float_format="%.4f")
@@ -312,14 +288,11 @@ def write_data(
                 written = True
 
     elif data_format in ("excel", "xls", "xlsx"):
-
         fname = fname.with_suffix(".xlsx")
         if frame_data:
             written = write_excel(df, fname, float_format="%.4f", sheet_name="evds_data")
         if json_data:
-            json_str: JSONType = json.dumps(
-                data, skipkeys=True, allow_nan=True, ensure_ascii=False
-            )
+            json_str: JSONType = json.dumps(data, skipkeys=True, allow_nan=True, ensure_ascii=False)
             stream_like: TextIO = StringIO(json_str)
             df: pd.DataFrame = pd.read_json(stream_like, encoding="utf-8")
             written = write_excel(df, fname, float_format="%.4f", sheet_name="evds_data")
@@ -327,7 +300,7 @@ def write_data(
             try:
                 df: pd.DataFrame = pd.DataFrame(data)
             except Exception:
-                print(f'failed: {data} is not an Excel convertable structure')
+                print(f"failed: {data} is not an Excel convertable structure")
                 return
             written = write_excel(df, fname, float_format="%.4f", sheet_name="evds_data")
             written = True
@@ -339,7 +312,6 @@ def write_data(
 
 
 def join_sequentials(series: Sequence[str], delimiter: str = "-") -> str:
-
     """Returns a joined string which is created from given list and delimiter.
 
     Args:
@@ -354,12 +326,11 @@ def join_sequentials(series: Sequence[str], delimiter: str = "-") -> str:
 
 
 def set_column_names(
-                     df: pd.DataFrame,
-                     column_names: Sequence[str],
-                     all_uppercase: bool = True,
-                     double_size: bool = False
-                     ) -> pd.DataFrame:
-
+    df: pd.DataFrame,
+    column_names: Sequence[str],
+    all_uppercase: bool = True,
+    double_size: bool = False,
+) -> pd.DataFrame:
     """Returns the same DataFrame object as changing column names with given ones.
 
     Args:
@@ -379,15 +350,14 @@ def set_column_names(
 
     if not isinstance(df, pd.DataFrame):
         raise TypeError(
-            f"A Pandas DataFrame object must be supplied to df variable.\n"
-            f"You sent {type(df)}"
-    )
+            f"A Pandas DataFrame object must be supplied to df variable.\nYou sent {type(df)}"
+        )
 
     try:
         given_size: int = len(column_names)
     except Exception:
         raise TypeError(
-            'Column names must be strings in a Sequence type container like a List or Tuple'
+            "Column names must be strings in a Sequence type container like a List or Tuple"
         ) from None
     column_size: int = len(df.columns)
     if given_size != column_size:
@@ -397,7 +367,7 @@ def set_column_names(
             f"({column_size if not double_size else column_size * 2})"
         )
 
-    new_names: List[str] = column_names
+    new_names: list[str] = column_names
 
     if all_uppercase:
         new_names = [name.upper() for name in new_names]
@@ -408,7 +378,6 @@ def set_column_names(
 
 
 def drop_na_columns(df: pd.DataFrame) -> pd.DataFrame:
-
     """Returns the same DataFrame as dropping columns which are all NaN
 
     Args:
@@ -417,17 +386,14 @@ def drop_na_columns(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: DataFrame cleared from NaNs
     """
-    df.dropna(axis=1, how='all', inplace=True)
+    df.dropna(axis=1, how="all", inplace=True)
 
     return df
 
 
 def drop_columns(
-                 df: pd.DataFrame,
-                 columns: Optional[Sequence] = None,
-                 ignore_errors: bool = True
-                 ) -> pd.DataFrame:
-
+    df: pd.DataFrame, columns: Sequence[Any] | None = None, ignore_errors: bool = True
+) -> pd.DataFrame:
     """Returns DataFrame clearing it from predetermined and given fields.
 
     Args:
@@ -448,7 +414,7 @@ def drop_columns(
         raise TypeError("Columns must be a single string or a sequence of strings.")
 
     if ignore_errors:
-        df.drop(columns=clear_list, inplace=True, errors='ignore')
+        df.drop(columns=clear_list, inplace=True, errors="ignore")
     else:
         df.drop(columns=clear_list, inplace=True)
 
@@ -456,7 +422,6 @@ def drop_columns(
 
 
 def progress(current: int, maximum: int, real_end: bool = False) -> None:
-
     """A simple progressbar implementation
 
     Args:

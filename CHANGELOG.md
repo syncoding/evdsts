@@ -2,6 +2,25 @@
 
 ## evdsts Changelog
 
+### V.0.1.0
+ - EVDS 3.0 Compatibility
+ - Turkish User Manual Added
+ - Python 3.11 and 3.12 support has been dropped
+ - Dependency Update: pandas >= 3.0.0
+ - Dependenct Update: requests >= 2.32.5
+ - New Dependency: tqdm (for index building progress monitoring)
+ - Auto Resolve Level 1-2-3 Categories
+ - Series Searching Enhanced
+ - Building Duplicate Index Entries Fixed
+ - Indexing Refactored (since the API keeps rate limiting the requests)
+ - pandas int16 cast was returning negative category id's because of the overflow, fixed: int32
+ - Index Building CLI script
+ - Connection and Read Timeouts are Increased Again
+ - Index Update
+ - New Style Type Hinting
+ - Various Small Bug Fixes
+
+
 ### V.1.0rc6
  - Python 3.8, 3.9 and 3.10 support has been dropped
  - Config has been migrated from setup.py to pyproject.toml

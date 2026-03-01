@@ -3,8 +3,8 @@
 __author__ = "Burak CELIK"
 __copyright__ = "Copyright (c) 2022 Burak CELIK"
 __license__ = "MIT"
-__version__ = "1.0rc5"
-__internal__ = "0.0.1"
+__version__ = "0.1.0"
+__mail__ = "synertic@gmail.com"
 
 
 class SubCategoryNotFoundException(Exception):
@@ -12,11 +12,11 @@ class SubCategoryNotFoundException(Exception):
 
 
 class GroupNotFoundException(Exception):
-    """ Raisess when a group of sub-category is not found"""
+    """Raisess when a group of sub-category is not found"""
 
 
 class SeriesNotFoundException(Exception):
-    """ Raisess when a series is not found"""
+    """Raisess when a series is not found"""
 
 
 class APIServiceConnectionException(Exception):
@@ -73,6 +73,7 @@ class UnknownTimeSeriesIdentifierException(Exception):
 
 class InsufficientSampleSizeException(Exception):
     """Raisess if a process needs a larger size sample than provided"""
+
 
 class OptionalPackageRequiredException(Exception):
     """Raisess if a required optional package is not found on environment"""

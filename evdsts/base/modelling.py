@@ -7,28 +7,26 @@ A simple least squares linear modelling class aims at using nothing except numpy
 __author__ = "Burak CELIK"
 __copyright__ = "Copyright (c) 2022 Burak CELIK"
 __license__ = "MIT"
-__version__ = "1.0rc5"
-__internal__ = "0.0.1"
+__version__ = "0.1.0"
+__mail__ = "synertic@gmail.com"
 
 
 import enum
-from typing import Dict, List, Tuple, Union, Optional, Any
-from numpy.typing import NDArray
+from typing import Any
 
 import numpy as np
-from numpy.linalg import LinAlgError
 import pandas as pd
+from numpy.linalg import LinAlgError
+from numpy.typing import NDArray
 
 from evdsts.configuration.types import FrameLike
 
 
 class LSELinalg:
-
     """LS Linear Algebra Calculations Class"""
 
     @staticmethod
     def _shif_array(arr: NDArray[Any], lag: int) -> NDArray[Any]:
-
         """Returns the lagged series of given series
 
         Returns:
@@ -39,7 +37,6 @@ class LSELinalg:
 
     @staticmethod
     def _id_variable_matrix(x: NDArray[Any], const: bool, trend: bool) -> NDArray[Any]:
-
         """Returns independent variable matrix
 
         Args:
@@ -62,7 +59,6 @@ class LSELinalg:
 
     @staticmethod
     def _inverse_xtx(x: NDArray[Any]) -> NDArray[Any]:
-
         """Returns X.T(X)
 
         Args:
@@ -82,7 +78,6 @@ class LSELinalg:
 
     @staticmethod
     def _lse_coeffs(y: NDArray[Any], x: NDArray[Any]) -> NDArray[Any]:
-
         """Returns least squares estimation coefficients.
 
         Args:
@@ -99,7 +94,6 @@ class LSELinalg:
 
     @staticmethod
     def _forecast(x: NDArray[Any], coeffs: NDArray[Any]) -> NDArray[Any]:
-
         """Returns LS forecast series
 
         Args:
@@ -115,7 +109,6 @@ class LSELinalg:
 
     @staticmethod
     def _resids(y: NDArray[Any], forecast: NDArray[Any]) -> NDArray[Any]:
-
         """Returns LS forecast residual series
 
         Args:
@@ -131,7 +124,6 @@ class LSELinalg:
 
     @staticmethod
     def _resid_var(resids: NDArray[Any], x: NDArray[Any]) -> np.float32:
-
         """Returns variance of residuals
 
         Args:
@@ -151,13 +143,12 @@ class LSELinalg:
         if degree_of_fredom == 0:
             raise ZeroDivisionError("Resid Variance: Degree of freedom is 0")
 
-        resid_var: np.float32 = (1 / degree_of_fredom) * np.sum(resids ** 2)
+        resid_var: np.float32 = (1 / degree_of_fredom) * np.sum(resids**2)
 
         return resid_var
 
     @staticmethod
     def _beta_varcov_matrix(x: NDArray[Any], resids: NDArray[Any]) -> NDArray[Any]:
-
         """Returns Variance-Covariance matrix of the LS model coefficients
 
         Args:
@@ -176,7 +167,6 @@ class LSELinalg:
 
     @staticmethod
     def _rss(resids: NDArray[Any]) -> np.float32:
-
         """Returns residual sum of squares
 
         Args:
@@ -185,13 +175,12 @@ class LSELinalg:
         Returns:
             - np.float32: RSS
         """
-        rss: np.float32 = np.nansum(resids ** 2)
+        rss: np.float32 = np.nansum(resids**2)
 
         return rss
 
     @staticmethod
     def _ess(y: NDArray[Any], forecast: NDArray[Any]) -> np.float32:
-
         """Returns explained sum of squares
 
         Args:
@@ -206,7 +195,6 @@ class LSELinalg:
 
     @staticmethod
     def _tss(y: NDArray[Any]) -> np.float32:
-
         """Returns total sum of squares
 
         Args:
@@ -220,7 +208,6 @@ class LSELinalg:
 
     @staticmethod
     def _r2(y: NDArray[Any], resids: NDArray[Any]) -> np.float32:
-
         """Returns determination coefficient
 
         Returns:
@@ -231,7 +218,6 @@ class LSELinalg:
 
     @staticmethod
     def _adj_r2(y: NDArray[Any], x: NDArray[Any], resids: NDArray[Any]) -> np.float32:
-
         """Returns adjusted determination coefficient
 
         Args:
@@ -261,7 +247,6 @@ class LSELinalg:
 
     @staticmethod
     def _mse(resids: NDArray[Any]) -> np.float32:
-
         """Returns mean squarred errors
 
         Args:
@@ -277,7 +262,6 @@ class LSELinalg:
 
     @staticmethod
     def _loglikelihood(resids: NDArray[Any]) -> np.float32:
-
         """Return the result of log-likelihood function
 
         Args:
@@ -297,7 +281,6 @@ class LSELinalg:
 
     @staticmethod
     def _aic(resids: NDArray[Any], k: int) -> np.float32:
-
         """Returns Akaike Information Criterion
 
         Akaike, H. (1969), "Fitting Autoregressive Models for Prediction". Annals of the
@@ -318,7 +301,6 @@ class LSELinalg:
 
     @staticmethod
     def _bic(resids: np.float32, k: int) -> np.float32:
-
         """Returns Schwarz Bayesian Criterion
         Schwarz, G. (1978), "Estimating the Dimension of a Model". Annals of Statistics,
         6, 461-464.
@@ -333,13 +315,12 @@ class LSELinalg:
 
         n: int = len(resids)
         loglikelihood: np.float32 = LSELinalg._loglikelihood(resids)
-        bic: np.float32 = - 2 * loglikelihood + k * np.log(n)
+        bic: np.float32 = -2 * loglikelihood + k * np.log(n)
 
         return bic
 
     @staticmethod
     def _dw(resids: NDArray[Any]) -> np.float32:
-
         """Returns Durbin-Watson Test Stats
         Durbin, J.; Watson, G. S. (1950). "Testing for Serial Correlation in Least Squares Regression,
         I". Biometrika. 37 (3-4): 409-428.
@@ -351,15 +332,14 @@ class LSELinalg:
             - np.float32: DW test stats
         """
 
-        dw: np.float32 = (
-            np.nansum((resids - LSELinalg._shif_array(resids, 1)) ** 2) / np.nansum(resids ** 2)
+        dw: np.float32 = np.nansum((resids - LSELinalg._shif_array(resids, 1)) ** 2) / np.nansum(
+            resids**2
         )
 
         return dw
 
     @staticmethod
     def _beta_variances(var_cov_matrix: NDArray[Any]) -> NDArray[Any]:
-
         """Variances of LS Model Beta coefficients
 
         Args:
@@ -373,7 +353,6 @@ class LSELinalg:
 
     @staticmethod
     def _beta_standard_errors(var_cov_matrix: NDArray[Any]) -> NDArray[Any]:
-
         """Standard errors of Beta coefficients
 
         Args:
@@ -387,7 +366,6 @@ class LSELinalg:
 
     @staticmethod
     def _t_stats(coeffs: NDArray[Any], standard_errors: NDArray[Any]) -> NDArray[Any]:
-
         """t stats of LS model Beta coefficients
 
         Args:
@@ -402,15 +380,13 @@ class LSELinalg:
 
     @staticmethod
     def _variable_matrixes(
-                           series: pd.DataFrame,
-                           y: Union[str, int]
-    ) -> Tuple[NDArray[Any], NDArray[Any]]:
-
+        series: pd.DataFrame, y: str | int
+    ) -> tuple[NDArray[Any], NDArray[Any]]:
         """Returns dependent variable vector and independent variable matrix
 
         Args:
             - series (pd.DataFrame): series to be splitted
-            - y (Union[str, int]): dependent variable. Can be given as
+            - y (str | int): dependent variable. Can be given as
                 - Column name of the dependent variable in DataFrame
                 - Column index (starting from 0) of dependent variable in DataFrame
 
@@ -420,7 +396,7 @@ class LSELinalg:
             - TypeError: If wrong type is given for deternmining dependent variable
 
         Returns:
-            - Tuple[NDArray[Any], NDArray[Any]]: dependent variable vector and independent variable matrix
+            - tuple[NDArray[Any], NDArray[Any]]: dependent variable vector and independent variable matrix
         """
 
         if isinstance(y, str):
@@ -443,13 +419,12 @@ class LSELinalg:
         return y, x
 
     @staticmethod
-    def _model_repr(series: pd.DataFrame, y: Union[str, int], const: bool, trend: bool) -> str:
-
+    def _model_repr(series: pd.DataFrame, y: str | int, const: bool, trend: bool) -> str:
         """Returns string representation of created LS model
 
         Args:
             - series (pd.DataFrame): DataFrame object includes dependent and independent variables
-            - y (Union[str, int]): dependent variable name or index
+            - y (str | int): dependent variable name or index
                 - Column name of the dependent variable in DataFrame
                 - Column index (starting from 0) of dependent variable in DataFrame
             - const (bool): model includes constant term
@@ -462,7 +437,7 @@ class LSELinalg:
             str: string representation of created model
         """
 
-        model: List[str] = []
+        model: list[str] = []
 
         if isinstance(y, str):
             x: pd.DataFrame = series.drop(columns=y)
@@ -492,20 +467,18 @@ class LSELinalg:
         if trend:
             model.append(f"B{len(x.columns) + 1}*Trend")
 
-        str_model: str = model[0] + ' + '.join(param for i, param in enumerate(model) if i > 0)
+        str_model: str = model[0] + " + ".join(param for i, param in enumerate(model) if i > 0)
 
         return str_model
 
 
 class TestType(enum.IntEnum):
-
     """An enumeration class determines the type of the test requested"""
 
     ADF = 0
 
 
 class TestResult:
-
     """A test result class returns from different kinds of tests"""
 
     def __init__(self, stats: np.float32, critical: float, result: bool) -> None:
@@ -522,51 +495,46 @@ class TestResult:
 
 
 class Evaluator:
-
     """Test evalutor class"""
 
-    adf_tau: Dict[str, Dict[int, List[float]]] = {
-
+    adf_tau: dict[str, dict[int, list[float]]] = {
         "NCNT": {
-                #    n     0.01    0.025   0.05     0.1
-                    25:  [-2.661, -2.273, -1.955, -1.609],
-                    50:  [-2.612, -2.246, -1.947, -1.612],
-                    100: [-2.588, -2.234, -1.944, -1.614],
-                    250: [-2.575, -2.227, -1.942, -1.616],
-                    500: [-2.570, -2.224, -1.942, -1.616],
-                    501: [-2.567, -2.223, -1.942, -1.616]
+            #    n     0.01    0.025   0.05     0.1
+            25: [-2.661, -2.273, -1.955, -1.609],
+            50: [-2.612, -2.246, -1.947, -1.612],
+            100: [-2.588, -2.234, -1.944, -1.614],
+            250: [-2.575, -2.227, -1.942, -1.616],
+            500: [-2.570, -2.224, -1.942, -1.616],
+            501: [-2.567, -2.223, -1.942, -1.616],
         },
-
         "CNT": {
-                #    n     0.01    0.025   0.05     0.1
-                    25:  [-3.724, -3.318, -2.986, -2.633],
-                    50:  [-3.568, -3.213, -2.921, -2.599],
-                    100: [-3.498, -3.164, -2.891, -2.582],
-                    250: [-3.457, -3.136, -2.873, -2.573],
-                    500: [-3.443, -3.127, -2.867, -2.570],
-                    501: [-3.434, -3.120, -2.863, -2.568]
+            #    n     0.01    0.025   0.05     0.1
+            25: [-3.724, -3.318, -2.986, -2.633],
+            50: [-3.568, -3.213, -2.921, -2.599],
+            100: [-3.498, -3.164, -2.891, -2.582],
+            250: [-3.457, -3.136, -2.873, -2.573],
+            500: [-3.443, -3.127, -2.867, -2.570],
+            501: [-3.434, -3.120, -2.863, -2.568],
         },
-
         "CT": {
-                #    n     0.01    0.025   0.05     0.1
-                    25:  [-4.375, -3.943, -3.589, -3.238],
-                    50:  [-4.152, -3.791, -3.495, -3.181],
-                    100: [-4.052, -3.722, -3.452, -3.153],
-                    250: [-3.995, -3.683, -3.427, -3.137],
-                    500: [-3.977, -3.670, -3.419, -3.132],
-                    501: [-3.963, -3.660, -3.413, -3.128]
+            #    n     0.01    0.025   0.05     0.1
+            25: [-4.375, -3.943, -3.589, -3.238],
+            50: [-4.152, -3.791, -3.495, -3.181],
+            100: [-4.052, -3.722, -3.452, -3.153],
+            250: [-3.995, -3.683, -3.427, -3.137],
+            500: [-3.977, -3.670, -3.419, -3.132],
+            501: [-3.963, -3.660, -3.413, -3.128],
         },
-
     }
 
     def evaluate(
-                 self,
-                 stats: float,
-                 test_type: TestType,
-                 n: int,
-                 alpha: float,
-                 const: bool = False,
-                 trend: bool = False
+        self,
+        stats: float,
+        test_type: TestType,
+        n: int,
+        alpha: float,
+        const: bool = False,
+        trend: bool = False,
     ) -> TestResult:
         """Evaluates the result as per related test critical value and returns a TestResult object
 
@@ -585,7 +553,7 @@ class Evaluator:
             - TestResult: Result of the evaluation
         """
 
-        defined_sig_levels: List[str] = ["0.01", "0.025", "0.05", "0.1"]
+        defined_sig_levels: list[str] = ["0.01", "0.025", "0.05", "0.1"]
 
         if str(alpha) not in defined_sig_levels:
             raise ValueError(
@@ -612,7 +580,6 @@ class Evaluator:
         critical: float = 0
 
         if test_type == TestType.ADF:
-
             if const and trend:
                 critical = self.adf_tau["CT"][n_index][sig_index]
             elif not trend and const:
@@ -629,33 +596,32 @@ class Evaluator:
 
 
 class LSEModelResults:
-
     """Least Squares Model Result Class"""
 
     def __init__(
-                 self,
-                 model: str,
-                 y: NDArray[Any],
-                 x: NDArray[Any],
-                 coeffs: NDArray[Any],
-                 standard_errors: NDArray[Any],
-                 t_stats: NDArray[Any],
-                 forecast: NDArray[Any],
-                 resids: NDArray[Any],
-                 r2: np.float32,
-                 adj_r2: np.float32,
-                 aic: np.float32,
-                 bic: np.float32,
-                 mse: np.float32,
-                 rss: np.float32,
-                 ess: np.float32,
-                 tss: np.float32,
-                 dw: np.float32,
-                 n: int,
-                 k: int,
-                 dof: int,
-                 const: bool,
-                 trend: bool
+        self,
+        model: str,
+        y: NDArray[Any],
+        x: NDArray[Any],
+        coeffs: NDArray[Any],
+        standard_errors: NDArray[Any],
+        t_stats: NDArray[Any],
+        forecast: NDArray[Any],
+        resids: NDArray[Any],
+        r2: np.float32,
+        adj_r2: np.float32,
+        aic: np.float32,
+        bic: np.float32,
+        mse: np.float32,
+        rss: np.float32,
+        ess: np.float32,
+        tss: np.float32,
+        dw: np.float32,
+        n: int,
+        k: int,
+        dof: int,
+        const: bool,
+        trend: bool,
     ) -> None:
 
         self.model: str = model
@@ -682,7 +648,6 @@ class LSEModelResults:
         self.trend: bool = trend
 
     def show_model(self, title: str = "LS Model") -> None:
-
         """Shows the model parameters and other stats
 
         Args:
@@ -694,12 +659,16 @@ class LSEModelResults:
         print(f"model: {self.model} (n = {self.n})")
         print("-" * 70)
 
-        print("{:10} {:10} {:10} {:10} {:20}".format(
-            "Parameter", "Coeff", "Std.Error", "t-Stats", "CI (Z alpha = 0.01)")
+        print(
+            "{:10} {:10} {:10} {:10} {:20}".format(
+                "Parameter", "Coeff", "Std.Error", "t-Stats", "CI (Z alpha = 0.01)"
+            )
         )
         print("-" * 70)
 
-        for idx, (coeff, std_error, t_stat) in enumerate(zip(self.coeffs, self.standard_errors, self.t_stats)):
+        for idx, (coeff, std_error, t_stat) in enumerate(
+            zip(self.coeffs, self.standard_errors, self.t_stats)
+        ):
             par: str = f"B{idx}" if self.const else f"B{idx + 1}"
             cff: str = str(round(coeff, 5))
             stderr: str = str(round(std_error, 5))
@@ -707,9 +676,7 @@ class LSEModelResults:
             ci: str = f"{round(coeff - 2.576 * std_error, 3)} < {par} < {round(coeff + 2.576 * std_error, 3)}"
 
             print(
-                  "{:10.10} {:10.10} {:10.10} {:10.10} {:20.20}".format(
-                                                               par, cff, stderr, tstat, ci
-                  )
+                "{:10.10} {:10.10} {:10.10} {:10.10} {:20.20}".format(par, cff, stderr, tstat, ci)
             )
 
         print("-" * 70)
@@ -720,12 +687,10 @@ class LSEModelResults:
 
 
 class LSModeller:
-
     """Least Square Modeller Class"""
 
     @staticmethod
     def _convert_to_df(series: FrameLike) -> pd.DataFrame:
-
         """Converts compatible types intp pandas DataFrame
 
         Args:
@@ -739,7 +704,7 @@ class LSModeller:
             pd.DataFrame: Series in DataFrame
         """
 
-        if not isinstance(series, (Dict, pd.Series, pd.DataFrame)):
+        if not isinstance(series, (dict, pd.Series, pd.DataFrame)):
             raise TypeError(
                 f"Series shold be either a dictionary or a pandas DataFrame or pandas DataFrame!\n"
                 f"Provided type is {type(series)}"
@@ -749,7 +714,7 @@ class LSModeller:
             return series
         if isinstance(series, pd.Series):
             return series.to_frame()
-        if isinstance(series, Dict):
+        if isinstance(series, dict):
             try:
                 df: pd.DataFrame = pd.DataFrame(series)
                 df.index.name = "Date"
@@ -757,17 +722,16 @@ class LSModeller:
             except Exception:
                 raise ValueError("Given dictionary could not be converted to a DataFrame") from None
 
-    def __init__(self, data: Optional[FrameLike] = None):
+    def __init__(self, data: FrameLike | None = None):
 
         self.data: FrameLike = data
 
-    def _extract_y(self, series: pd.DataFrame, test: Union[str, int]) -> pd.DataFrame:
-
+    def _extract_y(self, series: pd.DataFrame, test: str | int) -> pd.DataFrame:
         """Extracts a series as dependent variable vector by given series name or column index
 
         Args:
             - series (pd.DataFrame): DataFrame mades up of dependent and independent variables
-            - test (Union[str, int]): series to be extracted.
+            - test (str | int): series to be extracted.
                 - Column name of the dependent variable in DataFrame
                 - Column index (starting from 0) of dependent variable in DataFrame
 
@@ -798,7 +762,6 @@ class LSModeller:
         return y
 
     def _get_data(self, dataset: FrameLike) -> pd.DataFrame:
-
         """Creates data sets from given source
 
         Args:
@@ -822,24 +785,23 @@ class LSModeller:
         return series
 
     def model(
-              self,
-              dependent: Union[str, int] = 0,
-              const: bool = True,
-              trend: bool = False,
-              show_results: bool = False,
-              dataset: Optional[FrameLike] = None
+        self,
+        dependent: str | int = 0,
+        const: bool = True,
+        trend: bool = False,
+        show_results: bool = False,
+        dataset: FrameLike | None = None,
     ) -> LSEModelResults:
-
         """Models a Least Square Estimation Equation and calculates related stats and series
 
         Args:
-            - dependent (Union[str, int], optional): Dependent variable. Defaults to 0.
+            - dependent (str | int, optional): Dependent variable. Defaults to 0.
                 - Column name of the dependent variable in DataFrame
                 - Column index (starting from 0) of dependent variable in DataFrame
             - const (bool, optional): Model includes constant term. Defaults to True.
             - trend (bool, optional): Model includes deterministic trend. Defaults to False.
             - show_results (bool, optional): Gives model output. Defaults to False.
-            - dataset (Optional[FrameLike], optional): An external data source. Defaults to None.
+            - dataset (FrameLike | None, optional): An external data source. Defaults to None.
 
         Raises:
             - ValueError: If no data is provided for modelling
@@ -854,7 +816,7 @@ class LSModeller:
         if len(series) < 2:
             raise ValueError("LSEstimator needs a data set made up of at leats 2 variables!")
 
-        series = series.iloc[::].dropna(how='any')
+        series = series.iloc[::].dropna(how="any")
 
         y, x = LSELinalg._variable_matrixes(series=series, y=dependent)
         x: NDArray[Any] = LSELinalg._id_variable_matrix(x=x, const=const, trend=trend)
@@ -891,28 +853,28 @@ class LSModeller:
         )
 
         ls_result: LSEModelResults = LSEModelResults(
-                                                     model=model_repr,
-                                                     y=y,
-                                                     x=x,
-                                                     coeffs=coeffs,
-                                                     standard_errors=standard_errors,
-                                                     t_stats=t_stats,
-                                                     forecast=forecast,
-                                                     resids=resids,
-                                                     r2=r2,
-                                                     adj_r2=adj_r2,
-                                                     aic=aic,
-                                                     bic=bic,
-                                                     mse=mse,
-                                                     rss=rss,
-                                                     ess=ess,
-                                                     tss=tss,
-                                                     dw=dw,
-                                                     n=n,
-                                                     k=k,
-                                                     dof=dof,
-                                                     const=const,
-                                                     trend=trend
+            model=model_repr,
+            y=y,
+            x=x,
+            coeffs=coeffs,
+            standard_errors=standard_errors,
+            t_stats=t_stats,
+            forecast=forecast,
+            resids=resids,
+            r2=r2,
+            adj_r2=adj_r2,
+            aic=aic,
+            bic=bic,
+            mse=mse,
+            rss=rss,
+            ess=ess,
+            tss=tss,
+            dw=dw,
+            n=n,
+            k=k,
+            dof=dof,
+            const=const,
+            trend=trend,
         )
 
         if show_results:
@@ -921,17 +883,16 @@ class LSModeller:
         return ls_result
 
     def adf_test(
-                 self,
-                 test: Union[str, int] = 0,
-                 const: bool = True,
-                 trend: bool = False,
-                 lag_criterion: str = "bic",
-                 max_lag: int = 2,
-                 alpha: float = "0.05",
-                 show_results: bool = True,
-                 dataset: Optional[FrameLike] = None
+        self,
+        test: str | int = 0,
+        const: bool = True,
+        trend: bool = False,
+        lag_criterion: str = "bic",
+        max_lag: int = 2,
+        alpha: float = "0.05",
+        show_results: bool = True,
+        dataset: FrameLike | None = None,
     ) -> TestResult:
-
         """Returns Augmented Dickey-Fuller Test Result
 
         Dickey, D. A., & Fuller, W. A. (1979). "Distribution of the estimators for autoregressive
@@ -939,7 +900,7 @@ class LSModeller:
         427-431.
 
         Args:
-            - test (Union[str, int], optional): Series to be tested. Defaults to 0.
+            - test (str | int, optional): Series to be tested. Defaults to 0.
                 - Column name of the dependent variable in DataFrame
                 - Column index (starting from 0) of dependent variable in DataFrame
             - const (bool, optional): Model includes constant term. Defaults to True.
@@ -951,7 +912,7 @@ class LSModeller:
             - max_lag (int, optional): Maximum lag for A-DF process. Defaults to 2.
             - alpha (float, optional): Significance level for hypothesis test. Defaults to "0.05".
             - show_results (bool, optional): Shows test result. Defaults to True.
-            - dataset (Optional[FrameLike], optional): An external data source. Defaults to None.
+            - dataset (FrameLike | None, optional): An external data source. Defaults to None.
 
         Raises:
             - ValueError: If given lag criterion is not defined
@@ -960,7 +921,7 @@ class LSModeller:
             - TestResult: Test result
         """
 
-        defined_criteria: List[str] = ["aic", "bic"]
+        defined_criteria: list[str] = ["aic", "bic"]
 
         series: pd.DataFrame = self._get_data(dataset)
 
@@ -979,14 +940,13 @@ class LSModeller:
         base: pd.DataFrame = pd.concat([dy, yt1], axis=1)
         base.columns = [f"D({series_name})", f"{series_name}(t-1)"]
 
-        results: List[LSEModelResults] = []
+        results: list[LSEModelResults] = []
 
         # test for base (DF) model
         results.append(self.model(dataset=base, dependent=0, const=const, trend=trend))
 
         # ADF
         for i in range(1, max_lag + 1):
-
             lag_set: pd.DataFrame = pd.DataFrame()
 
             for k in range(1, i + 1):
@@ -996,15 +956,15 @@ class LSModeller:
 
             results.append(self.model(dataset=test_set, dependent=0, const=const, trend=trend))
 
-        results: List[LSEModelResults] = list(filter(None, results))
+        results: list[LSEModelResults] = list(filter(None, results))
 
         if lag_criterion == "aic":
-            sorted_models: List[LSEModelResults] = sorted(results, key=lambda result: result.aic)
+            sorted_models: list[LSEModelResults] = sorted(results, key=lambda result: result.aic)
             best_model: LSEModelResults = sorted_models[0]
             if show_results:
                 best_model.show_model()
         elif lag_criterion == "bic":
-            sorted_models: List[LSEModelResults] = sorted(results, key=lambda result: result.bic)
+            sorted_models: list[LSEModelResults] = sorted(results, key=lambda result: result.bic)
             best_model: LSEModelResults = sorted_models[0]
             if show_results:
                 best_model.show_model()
@@ -1030,16 +990,16 @@ class LSModeller:
         return test_result
 
     def coint_test(
-                   self,
-                   dependent: Union[str, int] = 0,
-                   ensure_integration: bool = False,
-                   const: bool = True,
-                   trend: bool = False,
-                   lag_criterion: str = "bic",
-                   max_lag: int = 2,
-                   alpha: float = "0.05",
-                   show_results: bool = True,
-                   dataset: Optional[FrameLike] = None
+        self,
+        dependent: str | int = 0,
+        ensure_integration: bool = False,
+        const: bool = True,
+        trend: bool = False,
+        lag_criterion: str = "bic",
+        max_lag: int = 2,
+        alpha: float = "0.05",
+        show_results: bool = True,
+        dataset: FrameLike | None = None,
     ) -> TestResult:
         """Engle-Granger Cointegration Test for given model
 
@@ -1047,7 +1007,7 @@ class LSModeller:
         Estimation and Testing.", Econometrica, 55, 251-276.
 
         Args:
-            - dependent (Union[str, int], optional): Dependent variable. Defaults to 0.
+            - dependent (str | int, optional): Dependent variable. Defaults to 0.
                 - Column name of the dependent variable in DataFrame
                 - Column index (starting from 0) of dependent variable in DataFrame
             ensure_integration (bool, optional): Check for individual integration levels.
@@ -1061,7 +1021,7 @@ class LSModeller:
             - max_lag (int, optional): Maximum lag for A-DF process. Defaults to 2.
             - alpha (float, optional): Significance level for hypothesis test. Defaults to "0.05".
             - show_results (bool, optional): Shows test result. Defaults to True.
-            - dataset (Optional[FrameLike], optional): An external data source. Defaults to None.
+            - dataset (FrameLike | None, optional): An external data source. Defaults to None.
 
         Raises:
             - ValueError: If given lag criterion is not defined
@@ -1070,7 +1030,7 @@ class LSModeller:
             - TestResult: Cointegration test result
         """
 
-        defined_criteria: List[str] = ["aic", "bic"]
+        defined_criteria: list[str] = ["aic", "bic"]
 
         series: pd.DataFrame = self._get_data(dataset)
 
@@ -1080,13 +1040,18 @@ class LSModeller:
             )
 
         if ensure_integration:
-            integration_results: List[TestResult] = []
+            integration_results: list[TestResult] = []
 
             for i in range(len(series.columns)):
                 integration_results.append(
                     self.adf_test(
-                        test=i, const=const, trend=trend, lag_criterion=lag_criterion,
-                        max_lag=max_lag, alpha=alpha, show_results=False
+                        test=i,
+                        const=const,
+                        trend=trend,
+                        lag_criterion=lag_criterion,
+                        max_lag=max_lag,
+                        alpha=alpha,
+                        show_results=False,
                     )
                 )
 
@@ -1115,8 +1080,14 @@ class LSModeller:
         resid_series.columns = ["CI_ERRORS"]
 
         test_result: TestResult = self.adf_test(
-            dataset=resid_series, test=0, const=True, trend=False, lag_criterion=lag_criterion,
-            max_lag=max_lag, alpha=alpha, show_results=show_results
+            dataset=resid_series,
+            test=0,
+            const=True,
+            trend=False,
+            lag_criterion=lag_criterion,
+            max_lag=max_lag,
+            alpha=alpha,
+            show_results=show_results,
         )
 
         if show_results:

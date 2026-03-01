@@ -3,28 +3,23 @@
 __author__ = "Burak CELIK"
 __copyright__ = "Copyright (c) 2022 Burak CELIK"
 __license__ = "MIT"
-__version__ = "1.0rc5"
-__internal__ = "0.0.1"
+__version__ = "0.1.0"
+__mail__ = "synertic@gmail.com"
 
 from itertools import combinations
-from typing import Dict, List, Sequence, Tuple, Optional, Type, Union
+from collections.abc import Sequence
 
 import numpy as np
 import pandas as pd
 
-
 from evdsts.configuration.exceptions import (
-    InsufficientSampleSizeException, OptionalPackageRequiredException
+    InsufficientSampleSizeException,
+    OptionalPackageRequiredException,
 )
 from evdsts.utils.general import is_numeric
 
 
-def _quantize_float(
-                    vector: np.ndarray,
-                    precision: int,
-                    preserve_int: bool = True
-                    ) -> np.ndarray:
-
+def _quantize_float(vector: np.ndarray, precision: int, preserve_int: bool = True) -> np.ndarray:
     """Quantizes a floating-point number (or int) vector to given precision
 
     Args:
@@ -49,11 +44,8 @@ def _quantize_float(
 
 
 def _set_precision(
-                   series: pd.DataFrame,
-                   precision: int,
-                   inplace: bool = False
-) -> Union[pd.DataFrame, None]:
-
+    series: pd.DataFrame, precision: int, inplace: bool = False
+) -> pd.DataFrame | None:
     """Sets the floating-point numbers precisions of series in given DataFrame and return it
     back
 
@@ -83,16 +75,14 @@ def _set_precision(
 
 
 class Transformator:
-
     """A data transformations class for data manipulations on EVDS series"""
 
     @staticmethod
-    def _convert_to_df(series: Union[Dict, pd.Series, pd.DataFrame]) -> pd.DataFrame:
-
+    def _convert_to_df(series: dict | pd.Series | pd.DataFrame) -> pd.DataFrame:
         """Converts compatible types intp pandas DataFrame
 
         Args:
-            series (Union[Dict, pd.Series, pd.DataFrame]): Data provided.
+            series (dict | pd.Series | pd.DataFrame): Data provided.
 
         Raises:
             TypeError: If provided data is not a convertible type
@@ -102,7 +92,7 @@ class Transformator:
             pd.DataFrame: Series in DataFrame
         """
 
-        if not isinstance(series, (Dict, pd.Series, pd.DataFrame)):
+        if not isinstance(series, (dict, pd.Series, pd.DataFrame)):
             raise TypeError(
                 f"Series shold be either a dictionary or a pandas DataFrame or pandas DataFrame!\n"
                 f"Provided type is {type(series)}"
@@ -112,7 +102,7 @@ class Transformator:
             return series
         if isinstance(series, pd.Series):
             return series.to_frame()
-        if isinstance(series, Dict):
+        if isinstance(series, dict):
             try:
                 df: pd.DataFrame = pd.DataFrame(series)
                 df.index.name = "Date"
@@ -122,23 +112,22 @@ class Transformator:
 
     @staticmethod
     def _prepare_for_return(
-                            original: pd.DataFrame,
-                            stats: pd.DataFrame,
-                            rename: bool = True,
-                            suffix_1: Optional[str] = None,
-                            suffix_2: Optional[str] = None,
-                            precision: Optional[int] = None,
-                            keep_originals: bool = True
+        original: pd.DataFrame,
+        stats: pd.DataFrame,
+        rename: bool = True,
+        suffix_1: str | None = None,
+        suffix_2: str | None = None,
+        precision: int | None = None,
+        keep_originals: bool = True,
     ) -> pd.DataFrame:
-
         """Prepares data for the last return.
 
         Args:
             - original (pd.DataFrame): original observations DataFrame
             - stats (pd.DataFrame): stats computed DataFrame
             - rename (bool, optional): renames the stats. Defaults to True.
-            - suffix_1 (Optional[str], optional): 1st suffix for renaming. Defaults to None.
-            - suffix_2 (Optional[str], optional): 2nd suffix for renaming. Defaults to None.
+            - suffix_1 (str | None, optional): 1st suffix for renaming. Defaults to None.
+            - suffix_2 (str | None, optional): 2nd suffix for renaming. Defaults to None.
             - precision (int, optional): precision to be truncated stats values. Defaults to None.
             - keep_originals (bool, optional): returns the original as well if True.
             Defaults to True.
@@ -155,7 +144,7 @@ class Transformator:
                 if suffix_1:
                     stats.columns = [
                         str(name) + "_" + suffix_1 + "_" + str(suffix_2) for name in stats.columns
-                        ]
+                    ]
 
         stats = Transformator.set_precision(stats.iloc[::], precision=precision)
 
@@ -169,14 +158,12 @@ class Transformator:
 
     @staticmethod
     def _join(*series: pd.DataFrame, axis: int = 1) -> pd.DataFrame:
-
         """Joins DataFrames together"""
 
         return pd.concat(series, axis=axis)
 
     @staticmethod
     def _z(vector: np.ndarray) -> np.ndarray:
-
         """Returns Z-Scores for a given vector.
 
         Args:
@@ -196,7 +183,6 @@ class Transformator:
 
     @staticmethod
     def _mad(vector: np.ndarray, constant: float = 1.4826) -> np.ndarray:
-
         """Returns median absulete deviations for given values in vector
 
         Args:
@@ -220,7 +206,6 @@ class Transformator:
 
     @staticmethod
     def _normalize(vector: np.ndarray, method: str) -> np.ndarray:
-
         """Returns normalized vector of given vector.
 
         Args:
@@ -242,12 +227,12 @@ class Transformator:
         if method == "simple":
             normal: np.ndarray = vector / (np.nanmax(vector) + 1)
         elif method == "min-max":
-            normal: np.ndarray = (
-                (vector - np.nanmin(vector)) / (np.nanmax(vector) - np.nanmin(vector))
+            normal: np.ndarray = (vector - np.nanmin(vector)) / (
+                np.nanmax(vector) - np.nanmin(vector)
             )
         elif method == "mean":
             normal: np.ndarray = (vector - np.nanmean(vector)) / (np.nanmax(vector) + 1)
-        elif method == 'median':
+        elif method == "median":
             normal: np.ndarray = (vector - np.nanmedian(vector)) / (np.nanmax(vector) + 1)
         elif method == "mad":
             normal: np.ndarray = Transformator._mad(vector)
@@ -258,12 +243,11 @@ class Transformator:
 
     @staticmethod
     def _time_trend(
-                    vector: np.ndarray,
-                    degree: int = 1,
-                    min_sample: int = 5,
-                    min_different: int = 5,
+        vector: np.ndarray,
+        degree: int = 1,
+        min_sample: int = 5,
+        min_different: int = 5,
     ) -> np.ndarray:
-
         """Returns the deterministic time trend for given vector
 
         Args:
@@ -307,7 +291,7 @@ class Transformator:
             )
 
         # y = Bn*Trend^n + Bn-1*Trend^n-1 + B0*Trend^0 + e,   n: n, n-1, ... n-n
-        trend: np.ndarray = np.arange(1, n + 1)   # deterministic trend vector X
+        trend: np.ndarray = np.arange(1, n + 1)  # deterministic trend vector X
         y: np.ndarray = vector  # Series vector Y
 
         pred: np.ndarray = np.isfinite(trend) & np.isfinite(y)  # just a precaution for NAN values
@@ -316,7 +300,7 @@ class Transformator:
 
         predictions = 0
         for degree, coeff in enumerate(coefficients, 1):
-            predictions += (trend ** degree) * coeff if degree != len(coefficients) else coeff
+            predictions += (trend**degree) * coeff if degree != len(coefficients) else coeff
 
         trend_vector: np.ndarray = predictions
 
@@ -324,18 +308,17 @@ class Transformator:
 
     @staticmethod
     def _dummy(
-            vector: np.ndarray,
-            threshold: Union[float, Sequence[float]],
-            condition: str,
-            fill_true: float,
-            fill_false: float
+        vector: np.ndarray,
+        threshold: float | Sequence[float],
+        condition: str,
+        fill_true: float,
+        fill_false: float,
     ) -> np.ndarray:
-
         """Converts given vector to a dummy vector.
 
         Args:
             vector (np.ndarray): A np.array containing numbers
-            threshold (Union[float, Sequence[float, float]]): cutoff point(s) for dummy creation
+            threshold (float | Sequence[float, float]): cutoff point(s) for dummy creation
             condition (str): creation condition
             fill_true (float): fill if condition is True
             fill_false (float): fill if condition is False
@@ -365,15 +348,14 @@ class Transformator:
         return vector_copy
 
     @staticmethod
-    def _rolling_window_check(window: Union[float, int, str]) -> Tuple[Union[int, str], int]:
-
+    def _rolling_window_check(window: float | int | str) -> tuple[int | str, int]:
         """Checks rolling window compatibility"""
 
         if isinstance(window, (int, float)):
             window = round(window)
             min_periods = 0
             if window < 2:
-                raise ValueError('window must be greater than 1.')
+                raise ValueError("window must be greater than 1.")
         elif isinstance(window, str):
             min_periods = 0
 
@@ -381,45 +363,48 @@ class Transformator:
 
     @staticmethod
     def _parse_parameters(
-                          parameter: Union[None, int, str, Sequence[int]],
-                          type_: Type = int
-    ) -> Tuple[Union[int, float, str]]:
-
+        parameter: None | int | str | Sequence[int], type_: Type = int
+    ) -> tuple[int | float | str]:
         """Parses given various types of parameters to required parameters format.
 
         Args:
-            parameter (Union[None, int, str, Sequence[int]]]): parameter
+            parameter (None | int | str | Sequence[int]]): parameter
 
         Returns:
-            Tuple[int]: parsed parameters
+            tuple[int]: parsed parameters
         """
 
         if not parameter:
             return tuple()
 
-        parsed_parameter: Tuple[Union[int, float]] = tuple()
+        parsed_parameter: tuple[int | float] = tuple()
 
         if isinstance(parameter, Sequence):
-
             if isinstance(parameter, str):
                 if type_ is float:
                     parsed_parameter = tuple(
-                        (type_(val.strip()) for val in parameter.split(',') if is_numeric(val.strip()))
+                        (
+                            type_(val.strip())
+                            for val in parameter.split(",")
+                            if is_numeric(val.strip())
+                        )
                     )
                 elif type_ is int:
                     parsed_parameter = tuple(
-                        (type_(val.strip()) for val in parameter.split(',') if val.strip().isnumeric())
+                        (
+                            type_(val.strip())
+                            for val in parameter.split(",")
+                            if val.strip().isnumeric()
+                        )
                     )
                 elif type_ is str:
-                    parsed_parameter = tuple(
-                        (type_(val.strip()) for val in parameter.split(','))
-                    )
+                    parsed_parameter = tuple((type_(val.strip()) for val in parameter.split(",")))
             else:
                 parsed_parameter = tuple(parameter)
         elif type_ is int and isinstance(parameter, type_):
-            parsed_parameter = (parameter, )
+            parsed_parameter = (parameter,)
         elif type_ is float and isinstance(parameter, (int, type_)):
-            parsed_parameter = (parameter, )
+            parsed_parameter = (parameter,)
         else:
             raise TypeError(f"Parameter type is wrong: {parameter}")
 
@@ -427,20 +412,19 @@ class Transformator:
 
     @staticmethod
     def _unique_parameters(
-                           seq_lags: Union[Tuple[int], None],
-                           range_lags: Union[int, None]
-    ) -> List[int]:
+        seq_lags: tuple[int] | None, range_lags: int | None
+    ) -> list[int]:
         """Returns a unique parameter set from given parameters set
 
         Args:
-            seq_lags (Union[Tuple[int], None]): sequential type lags
-            range_lags (Union[int, None]): integer lags
+            seq_lags (tuple[int] | None): sequential type lags
+            range_lags (int | None): integer lags
 
         Returns:
-            List[int]: _description_
+            list[int]: _description_
         """
 
-        raw_lags: List[int] = []
+        raw_lags: list[int] = []
 
         if seq_lags and range_lags:
             raw_lags = [lag for lag in range(1, range_lags + 1)] + [lag for lag in seq_lags]
@@ -449,13 +433,12 @@ class Transformator:
         elif seq_lags:
             raw_lags = [lag for lag in seq_lags]
 
-        unique_lags: List[int] = sorted(list(set(raw_lags)))
+        unique_lags: list[int] = sorted(list(set(raw_lags)))
 
         return unique_lags
 
     @staticmethod
     def join(*series: pd.DataFrame) -> pd.DataFrame:
-
         """Joins given series (all must be indexed the same)
 
         Raises:
@@ -468,17 +451,20 @@ class Transformator:
 
         if len(series) < 2:
             raise ValueError("There must be at least 2 DataFrames to be joined!")
-        check: bool = all(
-            (isinstance(data, (pd.DataFrame, pd.Series)) for data in series)
-        )
+        check: bool = all((isinstance(data, (pd.DataFrame, pd.Series)) for data in series))
         if not check:
             raise TypeError("All given series must be either a DataFrame or Series objects!")
 
         check = all(
-        (True if idx == len(series) - 1 else
-                True if data.index.equals(series[idx + 1].index) else False
-                    for idx, data in enumerate(series))
-    )
+            (
+                True
+                if idx == len(series) - 1
+                else True
+                if data.index.equals(series[idx + 1].index)
+                else False
+                for idx, data in enumerate(series)
+            )
+        )
         if not check:
             raise ValueError("The indexes of given series is not equal to each others!")
 
@@ -488,11 +474,8 @@ class Transformator:
 
     @staticmethod
     def set_precision(
-                      series: pd.DataFrame,
-                      precision: int,
-                      inplace: bool = False
-    ) -> Union[pd.DataFrame, None]:
-
+        series: pd.DataFrame, precision: int, inplace: bool = False
+    ) -> pd.DataFrame | None:
         """Sets the floating-point numbers precisions of series in given DataFrame and return it
         back
 
@@ -509,12 +492,11 @@ class Transformator:
 
         return fixed_series
 
-    def __init__(self, global_precision: Optional[int] = None) -> None:
-
+    def __init__(self, global_precision: int | None = None) -> None:
         """The transformation processes for any kind of data manupilations related to evdsts
 
         Args:
-            - global_precision (Optional[int], optional): Sets a global precision for floating-point
+            - global_precision (int | None, optional): Sets a global precision for floating-point
             numbers returned by all kind of transformation functions. Defaults to None.
                 - if None given: No global precision is set. Each transformation function uses its
                 own default precision if an explicit precision is not supplied with 'precision=n'
@@ -532,20 +514,17 @@ class Transformator:
             function.
         """
 
-        self.global_precision: Union[None, int] = global_precision
+        self.global_precision: None | int = global_precision
 
     @property
-    def global_precision(self) -> Union[None, int]:
-
+    def global_precision(self) -> None | int:
         """Returns the precision of floating-point numbers for all transformators"""
 
         return self._global_precision
 
     @global_precision.setter
-    def global_precision(self, val: Union[None, int]) -> None:
-
-        """Sets the precision of floating-point numbers for all transformators as a global default
-        """
+    def global_precision(self, val: None | int) -> None:
+        """Sets the precision of floating-point numbers for all transformators as a global default"""
 
         if val is None:
             self._global_precision = None
@@ -557,12 +536,11 @@ class Transformator:
 
         self._global_precision = val
 
-    def _decide_precision(self, precision: Union[None, int]) -> Union[None, int]:
-
+    def _decide_precision(self, precision: None | int) -> None | int:
         """Decides whichever precision is to be used for the process
 
         Returns:
-            Union[None, int]: precision decided.
+            None | int: precision decided.
         """
 
         if precision is not None:
@@ -576,11 +554,10 @@ class Transformator:
     def ln(
         self,
         series: pd.DataFrame,
-        precision: Optional[int] = None,
+        precision: int | None = None,
         keep_originals: bool = True,
-        rename: bool = True
+        rename: bool = True,
     ) -> pd.DataFrame:
-
         """Returns natural logarithm series.
 
         Args:
@@ -599,21 +576,24 @@ class Transformator:
         transformed: pd.DataFrame = np.log(series)
 
         ready_to_return: pd.DataFrame = Transformator._prepare_for_return(
-            original=series, stats=transformed, rename=rename, suffix_1='LN',
-            precision=precision, keep_originals=keep_originals
+            original=series,
+            stats=transformed,
+            rename=rename,
+            suffix_1="LN",
+            precision=precision,
+            keep_originals=keep_originals,
         )
 
         return ready_to_return
 
     def diff(
-            self,
-            series: pd.DataFrame,
-            order: int = 1,
-            precision: Optional[int] = None,
-            keep_originals: bool = True,
-            rename: bool = True
+        self,
+        series: pd.DataFrame,
+        order: int = 1,
+        precision: int | None = None,
+        keep_originals: bool = True,
+        rename: bool = True,
     ) -> pd.DataFrame:
-
         """Returns difference series in given order.
 
         Args:
@@ -636,25 +616,27 @@ class Transformator:
         if rename:
             transformed.columns = [
                 name + "_DIFF" if order == 1 else str(name) + "_DIFF_" + str(order)
-                    for name in transformed.columns
+                for name in transformed.columns
             ]
 
         ready_to_return: pd.DataFrame = Transformator._prepare_for_return(
-            original=series, stats=transformed, rename=False,
-            precision=precision, keep_originals=keep_originals
+            original=series,
+            stats=transformed,
+            rename=False,
+            precision=precision,
+            keep_originals=keep_originals,
         )
 
         return ready_to_return
 
     def lndiff(
-            self,
-            series: pd.DataFrame,
-            order: int = 1,
-            precision: Optional[int] = None,
-            keep_originals: bool = True,
-            rename: bool = True
+        self,
+        series: pd.DataFrame,
+        order: int = 1,
+        precision: int | None = None,
+        keep_originals: bool = True,
+        rename: bool = True,
     ) -> pd.DataFrame:
-
         """Returns differences of natural logarithms for given order. This is a symmetric returns
         that; if you get 0.2 ln difference in time t, and -0.2 ln difference in time t + 1 then you
         get back to where you were, that is, its total efect is 0. Notice the symmetry as a
@@ -681,25 +663,27 @@ class Transformator:
         if rename:
             transformed.columns = [
                 name + "_LNDIFF" if order == 1 else name + "_LNDIFF_" + str(order)
-                    for name in transformed.columns
+                for name in transformed.columns
             ]
 
         ready_to_return: pd.DataFrame = Transformator._prepare_for_return(
-            original=series, stats=transformed, rename=False,
-            precision=precision, keep_originals=keep_originals
+            original=series,
+            stats=transformed,
+            rename=False,
+            precision=precision,
+            keep_originals=keep_originals,
         )
 
         return ready_to_return
 
     def deterministic_trend(
-                            self,
-                            series: pd.DataFrame,
-                            degree: int = 1,
-                            precision: Optional[int] = None,
-                            keep_originals: bool = True,
-                            rename: bool = True
+        self,
+        series: pd.DataFrame,
+        degree: int = 1,
+        precision: int | None = None,
+        keep_originals: bool = True,
+        rename: bool = True,
     ) -> pd.DataFrame:
-
         """Returns deterministic time series trend for given series
 
         Args:
@@ -723,30 +707,32 @@ class Transformator:
         if rename:
             trend_series.columns = [
                 str(name) + "_LINTR" if degree == 1 else str(name) + "_PLYTR_" + str(degree)
-                    for name in trend_series.columns
+                for name in trend_series.columns
             ]
 
         ready_to_return: pd.DataFrame = Transformator._prepare_for_return(
-            original=series, stats=trend_series, rename=False,
-            precision=precision, keep_originals=keep_originals
+            original=series,
+            stats=trend_series,
+            rename=False,
+            precision=precision,
+            keep_originals=keep_originals,
         )
 
         return ready_to_return
 
     def sma(
-            self,
-            series: pd.DataFrame,
-            window: Union[int, str],
-            precision: Optional[int] = None,
-            keep_originals: bool = True,
-            rename: bool = True
+        self,
+        series: pd.DataFrame,
+        window: int | str,
+        precision: int | None = None,
+        keep_originals: bool = True,
+        rename: bool = True,
     ) -> pd.DataFrame:
-
-        """"Returns simple moving averages of series in given DataFrame.
+        """ "Returns simple moving averages of series in given DataFrame.
 
         Args:
             - series (pd.Series): DataFrame made up of time series.
-            - window Union[int, str]: The window for averaging as fixed period or time based.
+            - window int | str: The window for averaging as fixed period or time based.
                 - can be anchored to observations: 5 means exactly 5 observations regardless of
                 time.
                 - can be anchored to time: "5d" means observations that comprising exactly 5 days.
@@ -769,22 +755,26 @@ class Transformator:
         ma_: pd.DataFrame = series.rolling(window=window, min_periods=min_periods).mean()
 
         ready_to_return: pd.DataFrame = Transformator._prepare_for_return(
-            original=series, stats=ma_, rename=rename, suffix_1="SMA", suffix_2=window,
-            precision=precision, keep_originals=keep_originals
+            original=series,
+            stats=ma_,
+            rename=rename,
+            suffix_1="SMA",
+            suffix_2=window,
+            precision=precision,
+            keep_originals=keep_originals,
         )
 
         return ready_to_return
 
     def ema(
-            self,
-            series: pd.DataFrame,
-            window: Optional[float]= None,
-            alpha: Optional[float] = None,
-            precision: Optional[int] = None,
-            keep_originals: bool = True,
-            rename: bool = True
+        self,
+        series: pd.DataFrame,
+        window: float | None = None,
+        alpha: float | None = None,
+        precision: int | None = None,
+        keep_originals: bool = True,
+        rename: bool = True,
     ) -> pd.DataFrame:
-
         """Returns exponential moving averages of series in given DataFrame.
 
         Args:
@@ -820,8 +810,7 @@ class Transformator:
 
         if window and window < 2:
             raise ValueError(
-                f"Averaging period window must be greater than 1"
-                f"You provide window= {window}"
+                f"Averaging period window must be greater than 1You provide window= {window}"
             )
 
         if alpha and not (0 < alpha < 1):
@@ -834,29 +823,31 @@ class Transformator:
         precision = self._decide_precision(precision=precision)
         alpha = alpha if alpha else 2.0 / (1 + window)
 
-        ema_: pd.DataFrame = series.ewm(alpha=alpha,
-                                        min_periods=0,
-                                        adjust=False,
-                                        ignore_na=False).mean()
+        ema_: pd.DataFrame = series.ewm(
+            alpha=alpha, min_periods=0, adjust=False, ignore_na=False
+        ).mean()
 
         ready_to_return: pd.DataFrame = Transformator._prepare_for_return(
-            original=series, stats=ema_, rename=rename, suffix_1="EMA",
-            suffix_2= window if window else "A" + str(alpha).replace(".", "_"),
-            precision=precision, keep_originals=keep_originals
+            original=series,
+            stats=ema_,
+            rename=rename,
+            suffix_1="EMA",
+            suffix_2=window if window else "A" + str(alpha).replace(".", "_"),
+            precision=precision,
+            keep_originals=keep_originals,
         )
 
         return ready_to_return
 
     def rolling_var(
-                    self,
-                    series: pd.DataFrame,
-                    window: int,
-                    precision: Optional[int] = None,
-                    keep_originals: bool = True,
-                    rename: bool = True
+        self,
+        series: pd.DataFrame,
+        window: int,
+        precision: int | None = None,
+        keep_originals: bool = True,
+        rename: bool = True,
     ) -> pd.DataFrame:
-
-        """"Returns rolling variances of series in given dataframe to easliy spot
+        """ "Returns rolling variances of series in given dataframe to easliy spot
         possible structural breaks.
 
         Args:
@@ -882,22 +873,26 @@ class Transformator:
         rollvar: pd.DataFrame = series.rolling(window=window, min_periods=min_periods).var()
 
         ready_to_return: pd.DataFrame = Transformator._prepare_for_return(
-            original=series, stats=rollvar, rename=rename, suffix_1="ROLVAR", suffix_2=window,
-            precision=precision, keep_originals=keep_originals
+            original=series,
+            stats=rollvar,
+            rename=rename,
+            suffix_1="ROLVAR",
+            suffix_2=window,
+            precision=precision,
+            keep_originals=keep_originals,
         )
 
         return ready_to_return
 
     def rolling_corr(
-                    self,
-                    series: pd.DataFrame,
-                    window: int,
-                    precision: Optional[int] = None,
-                    keep_originals: bool = True,
-                    rename: bool = True
+        self,
+        series: pd.DataFrame,
+        window: int,
+        precision: int | None = None,
+        keep_originals: bool = True,
+        rename: bool = True,
     ) -> pd.DataFrame:
-
-        """"Returns binary rolling correlations of given series. Rolling Correlations in a time
+        """ "Returns binary rolling correlations of given series. Rolling Correlations in a time
         period (window) can be a good indication of unstable or spurious relitionships in series.
         Rolling correlations are especially useful for observing deviations from the long-term
         linear relitionships in provided series. Sever swings in observed correlations
@@ -926,42 +921,41 @@ class Transformator:
         window, min_periods = Transformator._rolling_window_check(window)
 
         rcorr: pd.DataFrame = (
-            series
-            .rolling(window=window, min_periods=min_periods)
-            .corr()
-            .iloc[:,:]
-         )
+            series.rolling(window=window, min_periods=min_periods).corr().iloc[:, :]
+        )
 
-        names: List[str] = rcorr.columns.to_list()
-        combs: List[str] = list(combinations(names, 2))
+        names: list[str] = rcorr.columns.to_list()
+        combs: list[str] = list(combinations(names, 2))
         result: pd.DataFrame = pd.DataFrame()
 
         for s1, s2 in combs:
             corrs: pd.DataFrame = (
-                rcorr.loc[(slice(None), s1), s2]
-                .drop(columns=s1)
-                .reset_index(drop=True)
+                rcorr.loc[(slice(None), s1), s2].drop(columns=s1).reset_index(drop=True)
             )
             result = pd.concat([result, corrs], axis=1)
 
-        result.columns = ['_'.join(name) for name in combs]
+        result.columns = ["_".join(name) for name in combs]
         result.index = series.index
 
         ready_to_return: pd.DataFrame = Transformator._prepare_for_return(
-            original=series, stats=result, rename=rename, suffix_1="RLCR", suffix_2=window,
-            precision=precision, keep_originals=keep_originals
+            original=series,
+            stats=result,
+            rename=rename,
+            suffix_1="RLCR",
+            suffix_2=window,
+            precision=precision,
+            keep_originals=keep_originals,
         )
 
         return ready_to_return
 
     def z_score(
-                self,
-                series: pd.DataFrame,
-                precision: Optional[int] = None,
-                keep_originals: bool = True,
-                rename: bool = True
+        self,
+        series: pd.DataFrame,
+        precision: int | None = None,
+        keep_originals: bool = True,
+        rename: bool = True,
     ) -> pd.DataFrame:
-
         """Returns Z scores (x-mu)/sigma(x) for series in given DataFrame. A good measure for
         spotting deviations from the expected values for a series which is normally distributed
         y:~N(m, s)
@@ -982,20 +976,23 @@ class Transformator:
         z: pd.DataFrame = series.apply(Transformator._z, raw=True)
 
         ready_to_return: pd.DataFrame = Transformator._prepare_for_return(
-            original=series, stats=z, rename=rename, suffix_1="Z",
-            precision=precision, keep_originals=keep_originals
+            original=series,
+            stats=z,
+            rename=rename,
+            suffix_1="Z",
+            precision=precision,
+            keep_originals=keep_originals,
         )
 
         return ready_to_return
 
     def mad(
-            self,
-            series: pd.DataFrame,
-            precision: Optional[int] = None,
-            keep_originals: bool = True,
-            rename: bool = True
+        self,
+        series: pd.DataFrame,
+        precision: int | None = None,
+        keep_originals: bool = True,
+        rename: bool = True,
     ) -> pd.DataFrame:
-
         """Returns Median Absolute Deviation median(|y(t) - median(yt)|) for series in given
         DataFrame. Notice: the median absolute deviation is a robust statistic, even for data drawn
         from non normal populations and could be used instead of z-score for measuring deviations
@@ -1017,23 +1014,26 @@ class Transformator:
         mad_: pd.DataFrame = series.apply(Transformator._mad, raw=True)
 
         ready_to_return: pd.DataFrame = Transformator._prepare_for_return(
-            original=series, stats=mad_, rename=rename, suffix_1="MAD",
-            precision=precision, keep_originals=keep_originals
+            original=series,
+            stats=mad_,
+            rename=rename,
+            suffix_1="MAD",
+            precision=precision,
+            keep_originals=keep_originals,
         )
 
         return ready_to_return
 
     def decompose(
-                  self,
-                  series: pd.DataFrame,
-                  degree: int = 1,
-                  source: str = "trend",
-                  method: str = "subtract",
-                  precision: Optional[int] = None,
-                  keep_originals: bool = True,
-                  rename: bool = True
+        self,
+        series: pd.DataFrame,
+        degree: int = 1,
+        source: str = "trend",
+        method: str = "subtract",
+        precision: int | None = None,
+        keep_originals: bool = True,
+        rename: bool = True,
     ) -> pd.DataFrame:
-
         """Returns detrended series in line with provided source and method. Extracting time based
         deterministic trends from the series could be a good way to create stationary series from the
         non-stationary ones. The most important caveat for this process is that modelling with
@@ -1069,8 +1069,8 @@ class Transformator:
             - pd.DataFrame: de-trended series
         """
 
-        defined_sources: List[str] = ["trend", "sma", "ema"]
-        defined_methods: List[str] = ["subtract", "divide"]
+        defined_sources: list[str] = ["trend", "sma", "ema"]
+        defined_methods: list[str] = ["subtract", "divide"]
 
         if not (isinstance(source, str) and isinstance(method, str)):
             raise TypeError("Source and method must be strings")
@@ -1111,21 +1111,24 @@ class Transformator:
                 detrended_series = series / ema_.replace({0: np.nan})
 
         ready_to_return: pd.DataFrame = Transformator._prepare_for_return(
-            original=series, stats=detrended_series, rename=rename, suffix_1="DET",
-            precision=precision, keep_originals=keep_originals
+            original=series,
+            stats=detrended_series,
+            rename=rename,
+            suffix_1="DET",
+            precision=precision,
+            keep_originals=keep_originals,
         )
 
         return ready_to_return
 
     def normalize(
-                  self,
-                  series: pd.DataFrame,
-                  method: str = "mad",
-                  precision: Optional[int] = None,
-                  keep_originals: bool = True,
-                  rename: bool = True
+        self,
+        series: pd.DataFrame,
+        method: str = "mad",
+        precision: int | None = None,
+        keep_originals: bool = True,
+        rename: bool = True,
     ) -> pd.DataFrame:
-
         """Returns normalized series in given DataFrame
 
         Args:
@@ -1146,7 +1149,7 @@ class Transformator:
             - pd.DataFrame: normalized series
         """
 
-        defined_methods: List[str] = ['simple', "min-max", 'mean', 'median', 'mad', 'z']
+        defined_methods: list[str] = ["simple", "min-max", "mean", "median", "mad", "z"]
 
         if not isinstance(method, str):
             raise TypeError(f"'method' must be a string type in {defined_methods}")
@@ -1163,24 +1166,27 @@ class Transformator:
         normalized = series.apply(Transformator._normalize, method=method, raw=True)
 
         ready_to_return: pd.DataFrame = Transformator._prepare_for_return(
-            original=series, stats=normalized, rename=rename, suffix_1="NORM",
-            precision=precision, keep_originals=keep_originals
+            original=series,
+            stats=normalized,
+            rename=rename,
+            suffix_1="NORM",
+            precision=precision,
+            keep_originals=keep_originals,
         )
 
         return ready_to_return
 
     def dummy(
-              self,
-              series: pd.DataFrame,
-              condition: str,
-              threshold: Union[float, str, int, Sequence[Union[float, str, int]]],
-              fill_true: float = 1,
-              fill_false: float = 0,
-              precision: Optional[int] = None,
-              keep_originals: bool = True,
-              rename: bool = True
+        self,
+        series: pd.DataFrame,
+        condition: str,
+        threshold: float | str | int | Sequence[float | str | int],
+        fill_true: float = 1,
+        fill_false: float = 0,
+        precision: int | None = None,
+        keep_originals: bool = True,
+        rename: bool = True,
     ) -> pd.DataFrame:
-
         """Retruns a dummy series of given series
 
         Args:
@@ -1193,7 +1199,7 @@ class Transformator:
                 - '()': greater than lower bound and smaller than upper bound (closed bounds).
                 - '[]': greater than or equal to lower bound and smaller than or equal to upper
                 bound (open bounds).
-            - threshold Union[float, str, Sequence[Union[float, str]]]: The cutoff or bound points
+            - threshold float | str | Sequence[float | str]: The cutoff or bound points
             for dummy creation (e.g: 5 for x > 5 condition or "1, 4", (1, 4) pr [1, 4] for
             1 < x < 4 condition)
             - fill_true (float, optional): Value to be filled if the given condition is True.
@@ -1210,7 +1216,7 @@ class Transformator:
             - pd.DataFrame: Dummy series that satisfy the given condition.
         """
 
-        defined_conditions: List[str] = [">", ">=", "<", "<=", "()", "[]"]
+        defined_conditions: list[str] = [">", ">=", "<", "<=", "()", "[]"]
 
         if not ((isinstance(condition, str)) and (condition in defined_conditions)):
             raise TypeError(f"Condition must be a a string an in {defined_conditions}")
@@ -1247,49 +1253,55 @@ class Transformator:
                     f"'{condition}'.\nThe lenght of provided bounds {threshold} is {len(threshold)}"
                 )
 
-
-        suffix_map: Dict[str, str] = {
+        suffix_map: dict[str, str] = {
             ">": f"GTT_{threshold}",
             ">=": f"GOET_{threshold}",
             "<": f"SMT_{threshold}",
             "<=": f"SOET_{threshold}",
             "()": f"CBOUND",
-            "[]": f"OBOUND"
+            "[]": f"OBOUND",
         }
 
         series = Transformator._convert_to_df(series)
         precision = self._decide_precision(precision=precision)
 
         dummy_series: pd.DataFrame = series.apply(
-                                    Transformator._dummy, threshold=threshold, condition=condition,
-                                    fill_true=fill_true, fill_false=fill_false, raw=True
-                                    )
+            Transformator._dummy,
+            threshold=threshold,
+            condition=condition,
+            fill_true=fill_true,
+            fill_false=fill_false,
+            raw=True,
+        )
 
         ready_to_return: pd.DataFrame = Transformator._prepare_for_return(
-            original=series, stats=dummy_series, rename=rename, suffix_1=suffix_map[condition],
-            precision=precision, keep_originals=keep_originals
+            original=series,
+            stats=dummy_series,
+            rename=rename,
+            suffix_1=suffix_map[condition],
+            precision=precision,
+            keep_originals=keep_originals,
         )
 
         return ready_to_return
 
     def laggeds(
-                self,
-                series: pd.DataFrame,
-                range_lags: Optional[int] = None,
-                lags: Optional[Union[int, Sequence, str]] = None,
-                precision: Optional[int] = None,
-                keep_originals=True
+        self,
+        series: pd.DataFrame,
+        range_lags: int | None = None,
+        lags: int | Sequence | str | None = None,
+        precision: int | None = None,
+        keep_originals=True,
     ) -> pd.DataFrame:
-
         """Returns the lagged series of given series.
 
         Args:
             - series (pd.DataFrame): DataFrame object containing series
-            - range_lags (Optional[int], optional): An integer number indicating lags in range.
+            - range_lags (int | None, optional): An integer number indicating lags in range.
             Defaults to None.
                 - given 'n' means all lags in 1....n.
                 - for instance; '5' means: y(t-1), y(t-2), y(t-3), y(t-4), y(t-5)
-            - lags (Optional[Union[int, Sequence, str], optional): Individual lag values.
+            - lags (Optional[int | Sequence | str, optional): Individual lag values.
             Defaults to None.
                 - given 'n' means only the nth. lag.
                 - for instance; '5' means: y(t-5)
@@ -1313,7 +1325,7 @@ class Transformator:
         if not (isinstance(range_lags, int) or range_lags is None):
             raise TypeError("'range_lags' must be an integer number representing the lags 1....n")
 
-        parsed_lags: Tuple[int] = Transformator._parse_parameters(lags)
+        parsed_lags: tuple[int] = Transformator._parse_parameters(lags)
 
         if not (range_lags or parsed_lags):
             raise ValueError(
@@ -1322,9 +1334,9 @@ class Transformator:
 
         precision = self._decide_precision(precision=precision)
 
-        unique_lags: List[int] = Transformator._unique_parameters(parsed_lags, range_lags)
+        unique_lags: list[int] = Transformator._unique_parameters(parsed_lags, range_lags)
 
-        lagged_series: List[pd.DataFrame] = []
+        lagged_series: list[pd.DataFrame] = []
 
         for lag in unique_lags:
             lagged: pd.DataFrame = series.copy(deep=True).shift(lag)
@@ -1334,19 +1346,18 @@ class Transformator:
         lagged_joint: pd.DataFrame = Transformator._join(*lagged_series)
 
         ready_to_return: pd.DataFrame = Transformator._prepare_for_return(
-            original=series, stats=lagged_joint, rename=False,
-            precision=precision, keep_originals=keep_originals
+            original=series,
+            stats=lagged_joint,
+            rename=False,
+            precision=precision,
+            keep_originals=keep_originals,
         )
 
         return ready_to_return
 
     def corr(
-             self,
-             series: pd.DataFrame,
-             method: str = 'pearson',
-             precision: Optional[int] = None
+        self, series: pd.DataFrame, method: str = "pearson", precision: int | None = None
     ) -> pd.DataFrame:
-
         """Returns correlation coefficients between series in given DataFrame. This is especially
         important for easily detecting possible multi co-linearity problem in considering model.
         Significant correlations (ro > 0.6 or ro < -0.6 in general) between considering independent
@@ -1369,7 +1380,7 @@ class Transformator:
             - pd.DataFrame: Correlation coefficients of given series.
         """
 
-        defined_methods: List[str] = ["pearson", "kendall", "spearman"]
+        defined_methods: list[str] = ["pearson", "kendall", "spearman"]
 
         if not isinstance(method, str):
             raise TypeError(f"'method' must be a string in {defined_methods}")
@@ -1409,15 +1420,14 @@ class Transformator:
         return corr_
 
     def autocorr(
-                self,
-                series: pd.DataFrame,
-                range_lags: Optional[int] = None,
-                lags: Optional[Union[int, Sequence, str]] = None,
-                method: str = 'pearson',
-                column: Optional[Union[str, int]] = None,
-                precision: Optional[int] = None
+        self,
+        series: pd.DataFrame,
+        range_lags: int | None = None,
+        lags: int | Sequence | str | None = None,
+        method: str = "pearson",
+        column: str | int | None = None,
+        precision: int | None = None,
     ) -> pd.DataFrame:
-
         """Returns autocorrelations between the original series and given lags of them.
         The autocorrelations could provide you a very quick insight about the stationary state of
         the series provided. Significant correlations (ro > 0.6 or ro < -0.6 in general) between the
@@ -1427,11 +1437,11 @@ class Transformator:
 
         Args:
             - series (pd.DataFrame): A DataFrame consist of only one series (such as usdtry)
-            - range_lags (Optional[int], optional): An integer number indicating lags in range.
+            - range_lags (int | None, optional): An integer number indicating lags in range.
             Defaults to None.
                 - given 'n' means all lags in 1....n.
                 - for instance; '5' means: y(t-1), y(t-2), y(t-3), y(t-4), y(t-5)
-            - lags (Optional[Union[int, Sequence, str], optional): Individual lag values.
+            - lags (Optional[int | Sequence | str, optional): Individual lag values.
             Defaults to None.
                 - given 'n' means only the nth. lag.
                 - for instance; '5' means: y(t-5)
@@ -1442,7 +1452,7 @@ class Transformator:
                 - pearson : standard Pearson correlation coefficients
                 - kendall : Kendall Tau correlation coefficients.
                 - spearman : Spearman rank correlation coefficients
-            - column (Optional[Union[str, int]], optinal): column name for DataFrames including
+            - column (str | int | None, optinal): column name for DataFrames including
             series more than 1. Defaults to None.
                 - string: column name
                 - integer: column index (starting with 0)
@@ -1518,30 +1528,29 @@ class Transformator:
         return auto_corr
 
     def serial_corr(
-                    self,
-                    series: pd.DataFrame,
-                    hold: Union[str, int],
-                    range_lags: Optional[int] = None,
-                    lags: Optional[Union[int, Sequence, str]] = None,
-                    method: str = 'pearson',
-                    precision: Optional[int] = None
+        self,
+        series: pd.DataFrame,
+        hold: str | int,
+        range_lags: int | None = None,
+        lags: int | Sequence | str | None = None,
+        method: str = "pearson",
+        precision: int | None = None,
     ) -> pd.DataFrame:
-
         """Returns a serial correlation vector between the constant and the others. The vector could
         provide you a very quick insight about linear relitionships between a constant series and
         the others including their lags.
 
         Args:
             - series (pd.DataFrame): A DataFrame consist of series (such as usdtry, eurtry)
-            - column (Optional[Union[str, int]], optinal): the constant column (like a dependent
+            - column (str | int | None, optinal): the constant column (like a dependent
             variable for a model)
                 - string: column name
                 - integer: column index (starting with 0)
-            - range_lags (Optional[int], optional): An integer number indicating lags in range.
+            - range_lags (int | None, optional): An integer number indicating lags in range.
             Defaults to None.
                 - given 'n' means all lags in 1....n.
                 - for instance; '5' means: y(t-1), y(t-2), y(t-3), y(t-4), y(t-5)
-            - lags (Optional[Union[int, Sequence, str], optional): Individual lag values.
+            - lags (Optional[int | Sequence | str, optional): Individual lag values.
             Defaults to None.
                 - given 'n' means only the nth. lag.
                 - for instance; '5' means: y(t-5)
@@ -1568,11 +1577,11 @@ class Transformator:
 
         if len(series.columns) < 2:
             raise ValueError(
-                    "Provided DataFrame consists of less than 2 series\nPlese provide a "
-                    "DataFrame made up of at least 2 series to see corr connections."
-                )
+                "Provided DataFrame consists of less than 2 series\nPlese provide a "
+                "DataFrame made up of at least 2 series to see corr connections."
+            )
 
-        exclude: List[str] = []
+        exclude: list[str] = []
         if isinstance(hold, str):
             exclude = [hold.strip()]
             try:
@@ -1601,7 +1610,7 @@ class Transformator:
         if not (isinstance(range_lags, int) or range_lags is None):
             raise TypeError("'range_lags' must be an integer number representing the lags 1....n")
 
-        parsed_lags: Tuple[int] = Transformator._parse_parameters(lags)
+        parsed_lags: tuple[int] = Transformator._parse_parameters(lags)
 
         if not (range_lags or parsed_lags):
             raise ValueError(
@@ -1610,13 +1619,17 @@ class Transformator:
 
         precision = self._decide_precision(precision=precision)
         included: pd.DataFrame = series.copy().loc[:, ~series.columns.isin(exclude)]
-        lagged_series: pd.DataFrame = self.laggeds(included, lags=lags, range_lags=range_lags, precision=None)
+        lagged_series: pd.DataFrame = self.laggeds(
+            included, lags=lags, range_lags=range_lags, precision=None
+        )
         dataset: pd.DataFrame = self.join(series[exclude], lagged_series)
 
         try:
-            corr_connect: pd.DataFrame = Transformator.set_precision(
-                                            dataset.corr(method=method), precision=precision
-                                         ).iloc[:, 0].to_frame()
+            corr_connect: pd.DataFrame = (
+                Transformator.set_precision(dataset.corr(method=method), precision=precision)
+                .iloc[:, 0]
+                .to_frame()
+            )
 
         except ModuleNotFoundError:
             if method == "kendall":
@@ -1637,16 +1650,15 @@ class Transformator:
         return corr_connect
 
     def outliers(
-                self,
-                series: pd.DataFrame,
-                method: str = 'mad',
-                critical_upper: float = 3.0,
-                critical_lower: float = -3.0,
-                precision: Optional[int] = None,
-                keep_originals: bool = True,
-                rename: bool = True
+        self,
+        series: pd.DataFrame,
+        method: str = "mad",
+        critical_upper: float = 3.0,
+        critical_lower: float = -3.0,
+        precision: int | None = None,
+        keep_originals: bool = True,
+        rename: bool = True,
     ) -> pd.DataFrame:
-
         """Returns dummy series for detected outliers.
 
         Args:
@@ -1681,7 +1693,7 @@ class Transformator:
             - pd.DataFrame: Detected outliers
         """
 
-        defined_methods: List[str] = ['mad', 'z']
+        defined_methods: list[str] = ["mad", "z"]
         if not isinstance(method, str):
             raise TypeError(f"'method must be a string in {defined_methods}")
 
@@ -1693,7 +1705,7 @@ class Transformator:
             )
         if not (
             isinstance(critical_lower, (int, float)) and isinstance(critical_upper, (int, float))
-           ):
+        ):
             raise TypeError("'critical_lower' and 'critical_upper' must be both numbers!")
 
         series = Transformator._convert_to_df(series)
@@ -1704,11 +1716,17 @@ class Transformator:
                 series, precision=None, keep_originals=False, rename=False
             )
         elif method == "mad":
-            score: pd.DataFrame = self.mad(series, precision=None, keep_originals=False, rename=False)
+            score: pd.DataFrame = self.mad(
+                series, precision=None, keep_originals=False, rename=False
+            )
 
         outliers_ub: pd.DataFrame = self.dummy(
-            score, threshold=critical_upper, condition=">",
-            keep_originals=False, rename=False, fill_false=np.nan
+            score,
+            threshold=critical_upper,
+            condition=">",
+            keep_originals=False,
+            rename=False,
+            fill_false=np.nan,
         )
         outliers_lb: pd.DataFrame = self.dummy(
             score, threshold=critical_lower, condition="<", keep_originals=False, rename=False
@@ -1716,25 +1734,28 @@ class Transformator:
         outliers_: pd.DataFrame = outliers_ub.combine_first(outliers_lb)
 
         ready_to_return: pd.DataFrame = Transformator._prepare_for_return(
-            original=series, stats=outliers_, rename=rename, suffix_1="OUT",
-            precision=precision, keep_originals=keep_originals
+            original=series,
+            stats=outliers_,
+            rename=rename,
+            suffix_1="OUT",
+            precision=precision,
+            keep_originals=keep_originals,
         )
 
         return ready_to_return
 
     def smooth(
-               self,
-               series: pd.DataFrame,
-               method: str = 'mad',
-               critical_upper: float = 3.0,
-               critical_lower: float = -3.0,
-               smooth_method: str = 'ema',
-               smooth_window: int = 2,
-               precision: Optional[int] = None,
-               keep_originals: bool = True,
-               rename: bool = True
+        self,
+        series: pd.DataFrame,
+        method: str = "mad",
+        critical_upper: float = 3.0,
+        critical_lower: float = -3.0,
+        smooth_method: str = "ema",
+        smooth_window: int = 2,
+        precision: int | None = None,
+        keep_originals: bool = True,
+        rename: bool = True,
     ) -> pd.DataFrame:
-
         """Returns outliers smoothed series.
 
         Args:
@@ -1777,7 +1798,7 @@ class Transformator:
 
         series = Transformator._convert_to_df(series)
 
-        smoothing_methods: List[str] = ['sma', 'ema']
+        smoothing_methods: list[str] = ["sma", "ema"]
 
         if not isinstance(smooth_method, str):
             raise TypeError("Smoothing method must be a string: ma or ema?")
@@ -1801,32 +1822,41 @@ class Transformator:
             critical_upper=critical_upper,
             precision=None,
             keep_originals=False,
-            rename=False
+            rename=False,
         )
 
         joint: pd.DataFrame = Transformator._prepare_for_return(
-            original=series, stats=outliers_, rename=True, suffix_1="OUTLIERS_INTERNAL",
-            precision=None, keep_originals=True
+            original=series,
+            stats=outliers_,
+            rename=True,
+            suffix_1="OUTLIERS_INTERNAL",
+            precision=None,
+            keep_originals=True,
         )
 
-        out_columns: List[str] = (
-            joint.columns[joint.columns.str.contains("_OUTLIERS_INTERNAL")].to_list()
-        )
+        out_columns: list[str] = joint.columns[
+            joint.columns.str.contains("_OUTLIERS_INTERNAL")
+        ].to_list()
 
         if not out_columns:
             return series
 
         for col_idx, column in enumerate(out_columns):
-
             idx = joint[column][joint[column] != 0].index
 
-            if smooth_method == 'ema':
+            if smooth_method == "ema":
                 new_vals = self.ema(
-                    series.iloc[:, col_idx], precision=None, keep_originals=False, window=smooth_window
+                    series.iloc[:, col_idx],
+                    precision=None,
+                    keep_originals=False,
+                    window=smooth_window,
                 ).loc[idx]
-            elif smooth_method == 'sma':
+            elif smooth_method == "sma":
                 new_vals = self.sma(
-                    series.iloc[:, col_idx], precision=None, keep_originals=False, window=smooth_window
+                    series.iloc[:, col_idx],
+                    precision=None,
+                    keep_originals=False,
+                    window=smooth_window,
                 ).loc[idx]
 
             new_vals = new_vals.iloc[:, 0]
@@ -1835,24 +1865,24 @@ class Transformator:
             series_copy.update(new_vals)
 
         ready_to_return: pd.DataFrame = Transformator._prepare_for_return(
-            original=series, stats=series_copy, rename=rename, suffix_1="SMOOTH",
-            precision=precision, keep_originals=keep_originals
+            original=series,
+            stats=series_copy,
+            rename=rename,
+            suffix_1="SMOOTH",
+            precision=precision,
+            keep_originals=keep_originals,
         )
 
         return ready_to_return
 
     def rename(
-               self,
-               series: pd.DataFrame,
-               names: Union[str, Sequence[str]],
-               inplace: bool = False
-    ) -> Union[pd.DataFrame, None]:
-
+        self, series: pd.DataFrame, names: str | Sequence[str], inplace: bool = False
+    ) -> pd.DataFrame | None:
         """Renames series names in given DataFrame
 
         Args:
             - series (pd.DataFrame): A DataFrame object consists of series.
-            - names (Union[str, Sequence[str]]): New names for series in same order with originals.
+            - names (str | Sequence[str]): New names for series in same order with originals.
                 - can be given as comma separated string: "usdtry, eurtry, corr_usdtry, corr_eurtry"
                 - can be given as a Tuple: ("usdtry", "eurtry", "corr_usdtry", "corr_eurtry")
                 - can be given as a List: ["usdtry", "eurtry", "corr_usdtry", "corr_eurtry"]
@@ -1863,7 +1893,7 @@ class Transformator:
             - ValueError: If lenght of given names doesn't match with length of series in DataFrame
 
         Returns:
-             Union[pd.DataFrame, None]: Renamed copy of given DataFrame if 'inplace=False' or None
+             pd.DataFrame | None: Renamed copy of given DataFrame if 'inplace=False' or None
         """
 
         names = Transformator._parse_parameters(names, type_=str)
@@ -1884,5 +1914,4 @@ class Transformator:
 
     def __repr__(self) -> str:
 
-        return (f"\n*{self.__class__.__name__}*:\n\n"
-                f"Global Precision: {self.global_precision}\n")
+        return f"\n*{self.__class__.__name__}*:\n\nGlobal Precision: {self.global_precision}\n"

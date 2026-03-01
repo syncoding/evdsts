@@ -6,11 +6,12 @@ authors = [
 maintainers = [
     { name = "syncoding", email = "synertic@gmail.com" },
 ]
-version = "1.0rc6"
-requires-python = ">=3.11"
+version = "0.1.0"
+requires-python = ">=3.13"
 dependencies = [
-    "pandas>=2.0.0",
-    "requests>=2.12.5",
+    "pandas>=3.0.0",
+    "requests>=2.32.5",
+    "tqdm>=4.67.3",
 ]
 readme = "README_EN.md"
 license = "MIT"
@@ -41,10 +42,12 @@ classifiers = [
   "Natural Language :: English",
   # Specify the Python versions you support here.
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
 ]
+
+[project.scripts]
+evdsts = "evdsts.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/syncoding/evdsts"

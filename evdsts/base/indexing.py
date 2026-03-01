@@ -3,41 +3,41 @@
 __author__ = "Burak CELIK"
 __copyright__ = "Copyright (c) 2022 Burak CELIK"
 __license__ = "MIT"
-__version__ = "1.0rc5"
+__version__ = "0.1.0"
 __internal__ = "0.0.2"
 
 
 import json
-from json import JSONDecodeError
 from datetime import datetime
+from json import JSONDecodeError
 from pathlib import Path
 from time import sleep
-from typing import Any, List, Optional, Dict
+from typing import Any
 
-from evdsts.configuration.cfg import EVDSTSConfig
+from tqdm import tqdm
+
 from evdsts.base.connecting import Connector
-from evdsts.utils.general import delete_file, progress, write_json
+from evdsts.configuration.cfg import EVDSTSConfig
+from evdsts.utils.general import delete_file, write_json
 
 
 class IndexBuilder:
-
     """EVDS Time Series Index Builder Class"""
 
     def __init__(
-                 self,
-                 key: Optional[str] = None,
-                 language: str = "TR",
-                 proxy_servers: Optional[Dict[str, str]] = None,
-                 verify_certificates: bool = True,
-                 secure: bool = True,
-                 ) -> None:
-
+        self,
+        key: str | None = None,
+        language: str = "TR",
+        proxy_servers: dict[str, str] | None = None,
+        verify_certificates: bool = True,
+        secure: bool = True,
+    ) -> None:
         """EVDS (EDDS) Search Index Builder.
 
         Args:
             - key (str): API key supplied by EVDS (EDDS) service.
             - language (str, optional): Interface language (if available). Defaults to "TR".
-            - proxy_servers (Optional[Dict[str, str]], optional): Proxies for accesing the EVDS
+            - proxy_servers (dict[str, str] | None, optional): Proxies for accesing the EVDS
             over them. Defaults to None
             - verify_certificates (bool, optional): Enabling/Disabling of SSL security certificate
             checking during connection.
@@ -56,21 +56,19 @@ class IndexBuilder:
             language=language,
             proxy_servers=proxy_servers,
             verify_certificates=verify_certificates,
-            secure=secure
+            secure=secure,
         )
 
         self.language: str = language
 
     @property
     def language(self) -> str:
-
         """Returns language code"""
 
         return self._language
 
     @language.setter
     def language(self, val: str) -> None:
-
         """Sets Indexing language"""
 
         if not self.cfg.defined_languages.get(val.strip(), None):
@@ -82,7 +80,6 @@ class IndexBuilder:
 
     @property
     def index_age_in_days(self) -> int:
-
         """Returns the age of the search index file in days.
 
         Returns:
@@ -99,7 +96,6 @@ class IndexBuilder:
         return age_days
 
     def _language_changed(self, language: str) -> None:
-
         """Things that must be reloaded when the language is changed.
 
         Args:
@@ -111,11 +107,10 @@ class IndexBuilder:
         self.connector.language = language
 
     def _load_key(self) -> None:
-
         """Load name references into memory from the references file.
 
         Returns:
-            - Dict[str, str]: name references
+            - dict[str, str]: name references
         """
 
         corrupted_file: bool = False
@@ -130,9 +125,9 @@ class IndexBuilder:
 
         with open(self.cfg.key_file, "r", encoding="utf-8") as f:
             try:
-                key: str = json.load(f)['key']
+                key: str = json.load(f)["key"]
             except JSONDecodeError:
-                print('JSON file that keeps the API KEY can not be decoded and is removed!')
+                print("JSON file that keeps the API KEY can not be decoded and is removed!")
                 corrupted_file = True
 
         if corrupted_file:
@@ -145,7 +140,6 @@ class IndexBuilder:
         return key
 
     def _set_index_file(self, language: str) -> str:
-
         """Sets search index file corresponding to given language
 
         Returns:
@@ -157,8 +151,19 @@ class IndexBuilder:
         else:
             return self.cfg.index_file_en
 
-    def _get_series(self, wait: int) -> Dict[str, Any]:
+    def _estimate_total_series(self) -> int:
+        """Estimates total series count from the existing index file.
 
+        Returns:
+            int: estimated number of series entries, or 0 if no index exists.
+        """
+        try:
+            with open(self.index_file, "r", encoding="utf-8") as f:
+                return len(json.load(f))
+        except (FileNotFoundError, JSONDecodeError, ValueError):
+            return 0
+
+    def _get_series(self, wait: int) -> dict[str, Any]:
         """Downloads indexing data from the API Service
 
         Args:
@@ -166,55 +171,80 @@ class IndexBuilder:
                 - can not be set less then 5 secs. in order not to overload the API service.
 
         Returns:
-            Dict[str, Any]: All available series on EVDS service.
+            dict[str, Any]: All available series on EVDS service.
         """
 
-        index: Dict[str, Any] = {}
+        index: dict[str, Any] = {}
 
-        main_categories: Dict[int, str] = self.connector.get_main_categories(as_dict=True)
-        main_category_ids: List[int] = main_categories.keys()
-        size: int = len(main_category_ids)
+        main_categories: dict[int, str] = self.connector.get_main_categories(as_dict=True)
+        all_cats = self.connector._all_categories
+        if not all_cats.empty and "UST_CATEGORY_ID" in all_cats.columns:
+            parent_ids: set = set(int(x) for x in all_cats["UST_CATEGORY_ID"].unique() if x != -1)
+            leaf_category_ids: list[int] = [
+                id_ for id_ in main_categories.keys() if int(id_) not in parent_ids
+            ]
+        else:
+            leaf_category_ids: list[int] = list(main_categories.keys())
 
-        progress(0, size)
+        estimated_total: int = self._estimate_total_series()
+
+        pbar = tqdm(
+            total=estimated_total,
+            desc="Building index",
+            unit=" series",
+            dynamic_ncols=True,
+        )
         exit_: bool = False
 
-        for idx, id_ in enumerate(main_category_ids):
-            sub_categories: Dict[str, Any] = (
-                self.connector.get_sub_categories(id_, as_dict=True).keys()
-            )
+        for id_ in leaf_category_ids:
+            try:
+                sub_categories: dict[str, Any] = self.connector.get_sub_categories(
+                    id_, as_dict=True
+                ).keys()
+            except Exception:
+                sleep(wait)
+                continue
+            sleep(wait)
             try:
                 for group in sub_categories:
-                    series_group: Dict[str, Any] = self.connector.get_groups(group, as_dict=True)
+                    series_group: dict[str, Any] = self.connector.get_groups(group, as_dict=True)
                     index.update(series_group)
+                    pbar.update(len(series_group))
                     sleep(wait)
             except KeyboardInterrupt:
                 exit_ = True
-
-            progress(idx, size)
+            except Exception:
+                sleep(wait)
 
             if exit_:
-                print('\nAborted !')
                 break
+
+        pbar.total = len(index)
+        pbar.n = len(index)
+        pbar.refresh()
+        pbar.close()
+
+        if exit_:
+            print("\nAborted !")
 
         return index
 
-    def _write_index(self, index: Dict[str, Any]) -> None:
-
+    def _write_index(self, index: dict[str, Any]) -> None:
         """Writes created index to the disk.
 
         Args:
-            index (Dict[str, Any]): provided created index dictionary.
+            index (dict[str, Any]): provided created index dictionary.
         """
 
         write_json(self.index_file, reference_dict=index)
 
-    def build_index(self, wait: float = 5) -> None:
-
+    def build_index(self, wait: float = 5, confirm: bool = True) -> None:
         """Builds a new search index that is required by in-situ searches.
 
         Args:
             - wait (int): waiting time in seconds before each new connection is established.
                 - can not be set less then 5 secs. in order not to overload the API service.
+            - confirm (bool): whether to ask for user confirmation before building.
         """
 
         if wait < 5:
@@ -230,15 +260,16 @@ class IndexBuilder:
             print(f"\nCurrent index is {index_age} days old.")
         else:
             print("\nNo prior built index is found.")
-        print("Rebuilding the index will take around 30 minutes.\n")
+        print("Rebuilding the index will take around 60 minutes.\n")
 
-        accept: str = input("Are you sure to continue? [Y/N]\n")
-        if accept.lower() not in ('y', 'yes'):
-            print("\nAborted!")
-            return
+        if confirm:
+            accept: str = input("Are you sure to continue? [Y/N]\n")
+            if accept.lower() not in ("y", "yes"):
+                print("\nAborted!")
+                return
 
-        print("\n(1/2) creating index... (ctrl+C to abort)\n")
-        index: Dict[str, Any] = self._get_series(wait)
+        print("(1/2) creating index... (ctrl+C to abort)\n")
+        index: dict[str, Any] = self._get_series(wait)
         print(f"\n(2/2) writing index -> {self.index_file}\n")
         self._write_index(index)
         print("done...\n")

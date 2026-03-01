@@ -3,31 +3,35 @@
 __author__ = "Burak CELIK"
 __copyright__ = "Copyright (c) 2022 Burak CELIK"
 __license__ = "MIT"
-__version__ = "1.0rc5"
-__internal__ = "0.0.1"
+__version__ = "0.1.0"
+__mail__ = "synertic@gmail.com"
 
 
+import json
+import re
 from collections import Counter
 from datetime import datetime
 from itertools import permutations
-import json
 from json import JSONDecodeError
 from pathlib import Path
 from pprint import pprint
-import re
 from time import perf_counter
-from typing import List, Dict, Tuple
 
 from evdsts.configuration.cfg import EVDSTSConfig
 from evdsts.utils.general import delete_file
 
+_TR_CHAR_MAP = str.maketrans("İıÖöÜüŞşÇçĞğ", "IiOoUuSsCcGg")
+
+
+def _normalize_turkish(text: str) -> str:
+    """Normalizes Turkish special characters to ASCII equivalents for matching."""
+    return text.translate(_TR_CHAR_MAP)
+
 
 class SearchEngine:
-
     """A simple search engine created for EVDS index searching"""
 
     def __init__(self, language: str) -> None:
-
         """A simple search engine originally developed for evdsts series code search.
 
         Args:
@@ -36,18 +40,16 @@ class SearchEngine:
         self.cfg: EVDSTSConfig = EVDSTSConfig()
         self.index_file: str = ""
         self.language: str = language
-        self.index: Dict[str, str] = {}
+        self.index: dict[str, str] = {}
 
     @property
     def language(self) -> str:
-
         """Returns language code"""
 
         return self._language
 
     @language.setter
     def language(self, val: str) -> None:
-
         """Sets Indexing language"""
 
         if not self.cfg.defined_languages.get(val.strip(), None):
@@ -59,7 +61,6 @@ class SearchEngine:
 
     @property
     def index_age_in_days(self) -> int:
-
         """Returns the age of the search index file in days.
 
         Returns:
@@ -73,7 +74,6 @@ class SearchEngine:
         return age_days
 
     def _language_changed(self, language: str) -> None:
-
         """Things that must be reloaded when the language is changed.
 
         Args:
@@ -85,7 +85,6 @@ class SearchEngine:
         self.index = {}
 
     def _set_index_file(self, language: str) -> str:
-
         """Sets search index file corresponding to given language
 
         Returns:
@@ -98,7 +97,6 @@ class SearchEngine:
             return self.cfg.index_file_en
 
     def _load_index(self) -> None:
-
         """Loads series index"""
 
         # load index on demand in order not to allocate memory unnecessarily.
@@ -111,27 +109,26 @@ class SearchEngine:
             try:
                 self.index = json.load(f)
             except JSONDecodeError:
-                print('JSON file that keeps the series index can not be decoded and is removed!')
+                print("JSON file that keeps the series index can not be decoded and is removed!")
                 corrupted_file = True
 
         if corrupted_file:
             delete_file(self.index_file)
 
-    def _show_search_results(self, results: Dict[str, List[str]]) -> None:
-
+    def _show_search_results(self, results: dict[str, list[str]]) -> None:
         """Writes series search results to screen.
 
         Args:
-            - results (Dict[str, List[str]]): search results
+            - results (dict[str, list[str]]): search results
         """
 
         print("{:^112}".format("Search Results"))
         print("-" * 112)
         print(
-            "{:20}".format('Series Code'),
-            "{:63}".format('Series Name'),
-            "{:16}".format('Frequency'),
-            "{:11}".format('Start Date')
+            "{:20}".format("Series Code"),
+            "{:63}".format("Series Name"),
+            "{:16}".format("Frequency"),
+            "{:11}".format("Start Date"),
         )
 
         print("-" * 112)
@@ -142,7 +139,7 @@ class SearchEngine:
                     "{:20.20}".format(series_name),
                     "{:63.63}".format(informations[0]),
                     "{:16.16}".format(informations[1]),
-                    "{:11.11}".format(informations[2])
+                    "{:11.11}".format(informations[2]),
                 )
             except KeyError:
                 # nevertheless show what is going on.
@@ -151,8 +148,7 @@ class SearchEngine:
 
         print("-" * 112)
 
-    def _get_keyword_vector(self, keyword: str, separator: str = " ") -> List[str]:
-
+    def _get_keyword_vector(self, keyword: str, separator: str = " ") -> list[str]:
         """Returns a vector from given literal
 
         Args:
@@ -160,19 +156,16 @@ class SearchEngine:
             separator (str, optional): sepator for words in literal " ".
 
         Returns:
-            List[str]: keyword vector
+            list[str]: keyword vector
         """
 
-        vector: List[str] = keyword.strip().split(separator)
+        vector: list[str] = keyword.strip().split(separator)
 
         return vector
 
     def _create_regex_patterns(
-                               self,
-                               keyword: str,
-                               max_word_vector_length: int = 8
-    ) -> Tuple[Tuple[str, int]]:
-
+        self, keyword: str, max_word_vector_length: int = 8
+    ) -> tuple[tuple[str, int]]:
         """Creates regex patterns for series searching.
 
         Args:
@@ -180,7 +173,7 @@ class SearchEngine:
             - max_word_vector_lenght(int): maxiumum lenght of words separeted with a separator.
 
         Returns:
-            - List[str]: list of created regex patterns.
+            - list[str]: list of created regex patterns.
         """
 
         # First, make a regexes list which consist of possible permutations of given words from 1
@@ -190,24 +183,27 @@ class SearchEngine:
         if not keyword:
             return []
 
-        keywords: List[str] = self._get_keyword_vector(keyword)
+        keywords: list[str] = self._get_keyword_vector(keyword)
 
         # very long expressions can take too long time to calculate permutations.
         if len(keywords) > max_word_vector_length:
             keywords = keywords[:max_word_vector_length]
 
         keywords = [
-            word for i in range(len(keywords) + 1)
-                for word in list(permutations(keywords, i)) if i > 0
+            word
+            for i in range(len(keywords) + 1)
+            for word in list(permutations(keywords, i))
+            if i > 0
         ]
-        patterns: List[List[str]] = [
-            r'\b' + possibility[0] + r'\b' if len(possibility) == 1 else
-                (word + r"\s+.*" for word in possibility)
-                    for possibility in keywords
+        patterns: list[list[str]] = [
+            r"\b" + possibility[0] + r"\b"
+            if len(possibility) == 1
+            else (word + r"\s+.*" for word in possibility)
+            for possibility in keywords
         ]
 
-        regexes: List[str] = [
-        str.rstrip(''.join((regex for regex in pattern)), r"\s+.*") for pattern in patterns
+        regexes: list[str] = [
+            str.rstrip("".join((regex for regex in pattern)), r"\s+.*") for pattern in patterns
         ]
         # add patterns to difficulty to match in order not to call len and split functions every
         # time to determine difficulty in scoring step
@@ -215,12 +211,17 @@ class SearchEngine:
 
         return regexes
 
-    def _search_score(
-                      self,
-                      keyword: str,
-                      overtime: float = 4.0,
-    ) -> Tuple[Counter, bool]:
+    def _match_text(self, regex: str, text: str) -> bool:
+        """Matches regex against text with Turkish character normalization fallback."""
+        if re.search(regex, text, re.IGNORECASE):
+            return True
+        return bool(re.search(_normalize_turkish(regex), _normalize_turkish(text), re.IGNORECASE))
 
+    def _search_score(
+        self,
+        keyword: str,
+        overtime: float = 4.0,
+    ) -> tuple[Counter, bool]:
         """Calculates search reasult for given patterns
 
         Args:
@@ -229,7 +230,7 @@ class SearchEngine:
 
 
         Returns:
-            - Tuple[Counter, bool]:
+            - tuple[Counter, bool]:
                 - list of matching keys and their scores
                 - a flag for providing information if the search was interceped due to timeover.
         """
@@ -237,11 +238,12 @@ class SearchEngine:
         # and second use a scoring schema that gives scores to the matches according to difficulty
         # of matching.
 
-        counter_list: List[str] = []
-        exclude_list: List[str] = []
+        counter_list: list[str] = []
+        exclude_list: list[str] = []
         time_over: bool = False
 
-        patterns: Tuple[Tuple[str, int]] = self._create_regex_patterns(keyword)
+        patterns: tuple[tuple[str, int]] = self._create_regex_patterns(keyword)
+        keyword_upper: str = keyword.strip().upper()
 
         start: float = perf_counter()
 
@@ -251,25 +253,35 @@ class SearchEngine:
         for key, info in self.index.items():
             score = 0
             exclude_list = []
+
+            # bonus: match against series code (e.g. "USD" matches "TP.DK.USD.A.YTL")
+            key_upper: str = key.upper().replace(".", " ")
+            for word in keyword_upper.split():
+                if word in key_upper:
+                    score += 2
+
+            # bonus: match against frequency field if available
+            if len(info) > 1 and keyword_upper in info[1].upper():
+                score += 1
+
             for regex, difficulty in patterns:
                 # first check 1 word long regexes
                 if difficulty == 1:
-                    evaluate = re.search(regex, info[0], re.IGNORECASE)
-                    if evaluate:
+                    if self._match_text(regex, info[0]):
                         score += difficulty
                     else:
                         # not matched so all aliases of the word will be excluded from furter
                         # searches
-                        exclude_list += [regex.strip(r'\b')]
+                        exclude_list += [regex.strip(r"\b")]
                 else:
                     break
 
             if exclude_list:
                 # exclude not matching individual words.
-                new_keyword: str = ' '.join(
+                new_keyword: str = " ".join(
                     (word for word in keyword.strip().split(" ") if word not in exclude_list)
                 )
-                new_patterns: Tuple[Tuple[str, int]] = self._create_regex_patterns(new_keyword)
+                new_patterns: tuple[tuple[str, int]] = self._create_regex_patterns(new_keyword)
 
             else:
                 # everyone onf them is matched
@@ -279,7 +291,7 @@ class SearchEngine:
             for regex, difficulty in new_patterns:
                 # check regexes only longer the 1 word
                 if difficulty > 1:
-                    if re.search(regex, info[0], re.IGNORECASE):
+                    if self._match_text(regex, info[0]):
                         score += difficulty
 
                 if (perf_counter() - start) > overtime:
@@ -294,12 +306,11 @@ class SearchEngine:
         return result, time_over
 
     def where(
-              self,
-              keyword: str,
-              n: int = 5,
-              verbose: bool = True,
-    ) -> Dict[str, str]:
-
+        self,
+        keyword: str,
+        n: int = 5,
+        verbose: bool = True,
+    ) -> dict[str, str]:
         """Searches given words to determine related series identifications on EVDS API service.
 
         Args:
@@ -311,7 +322,7 @@ class SearchEngine:
             - ValueError: if there is no keyword provided to search.
 
         Returns:
-            Union[None, Dict[str, str]]: Results dictionary.
+            None | dict[str, str]: Results dictionary.
         """
 
         if not self.index:
@@ -328,8 +339,8 @@ class SearchEngine:
 
         overtime: float = 4.0
         score, time_over = self._search_score(keyword, overtime=overtime)
-        most_commons: List[Tuple[str, int]] = score.most_common(n)
-        result: Dict[str, str] = {k: self.index[k][:3] for k, _ in most_commons}
+        most_commons: list[tuple[str, int]] = score.most_common(n)
+        result: dict[str, str] = {k: self.index[k][:3] for k, _ in most_commons}
 
         if verbose:
             if result:

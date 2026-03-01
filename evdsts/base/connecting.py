@@ -3,20 +3,21 @@
 __author__ = "Burak CELIK"
 __copyright__ = "Copyright (c) 2022 Burak CELIK"
 __license__ = "MIT"
-__version__ = "1.0rc5"
+__version__ = "0.1.0"
 __internal__ = "0.0.3"
 
 
-from datetime import datetime, timedelta
 import json
+import ssl
+import webbrowser
+from collections.abc import Sequence
+from datetime import datetime, timedelta
 from json import JSONDecodeError
 from pathlib import Path
 from string import ascii_letters, digits
-from typing import Optional, Sequence, Union, Any, List, Tuple, Dict
+from time import sleep
+from typing import Any
 from urllib.error import HTTPError
-import webbrowser
-import ssl
-
 
 import pandas as pd
 import requests
@@ -26,31 +27,49 @@ from requests.exceptions import RequestException
 from evdsts.base.searching import SearchEngine
 from evdsts.base.transforming import _set_precision
 from evdsts.configuration.cfg import EVDSTSConfig
-from evdsts.configuration.types import JSONType, EVDSHttpAdapter
 from evdsts.configuration.exceptions import (
-    AmbiguousFunctionMappingException, APIServiceConnectionException, SubCategoryNotFoundException,
-    UndefinedAggregationFunctionException, UndefinedFrequencyException,
-    UndefinedTransformationFunctionException, UnknownTimeSeriesIdentifierException,
-    UnmatchingParameterSizeException, WrongAPIKeyException, GroupNotFoundException,
-    AmbiguousOutputTypeException, SeriesNotFoundException, AmbiguousFunctionParameterException
+    AmbiguousFunctionMappingException,
+    AmbiguousFunctionParameterException,
+    AmbiguousOutputTypeException,
+    APIServiceConnectionException,
+    GroupNotFoundException,
+    SeriesNotFoundException,
+    SubCategoryNotFoundException,
+    UndefinedAggregationFunctionException,
+    UndefinedFrequencyException,
+    UndefinedTransformationFunctionException,
+    UnknownTimeSeriesIdentifierException,
+    UnmatchingParameterSizeException,
+    WrongAPIKeyException,
 )
+from evdsts.configuration.types import EVDSHttpAdapter, JSONType
 from evdsts.utils.general import (
-    copy_file, delete_file, drop_columns, drop_na_columns, join_sequentials, load_json,
-    set_column_names, write_data, write_json
+    copy_file,
+    delete_file,
+    drop_columns,
+    drop_na_columns,
+    join_sequentials,
+    load_json,
+    set_column_names,
+    write_data,
+    write_json,
 )
 from evdsts.utils.time_series import (
-    as_real, convert_to_business_date ,convert_to_time_series, correct_date, find_current_date,
-    get_period, parse_dates
+    as_real,
+    convert_to_business_date,
+    convert_to_time_series,
+    correct_date,
+    find_current_date,
+    get_period,
+    parse_dates,
 )
 
 
 class Connector:
-
     """TCMB (CBRT) EVDS (EDDS) API Service Connector Class."""
 
     @classmethod
     def request_key(cls, language="ENG") -> None:
-
         """Instructions to get API Key from EVDS API Service"""
 
         if language.lower() in ("tr", "turkce"):
@@ -84,17 +103,16 @@ class Connector:
         webbrowser.open(EVDSTSConfig.url_sign_up, new=2)
 
     def __init__(
-                 self,
-                 key: Optional[str] = None,
-                 language: str = "TR",
-                 show_links: bool = False,
-                 proxy_servers: Optional[Dict[str, str]] = None,
-                 verify_certificates: bool = True,
-                 secure: bool = True,
-                 jupyter_mode: bool = False,
-                 precision: Optional[int] = None
+        self,
+        key: str | None = None,
+        language: str = "TR",
+        show_links: bool = False,
+        proxy_servers: dict[str, str] | None = None,
+        verify_certificates: bool = True,
+        secure: bool = True,
+        jupyter_mode: bool = False,
+        precision: int | None = None,
     ) -> None:
-
         """EVDS (EDDS) API Service Connection Interface.
 
         Args:
@@ -104,7 +122,7 @@ class Connector:
                 - Turkce: `TUR`, `tur`, `TR`, `tr`
                 - English: `ENG`, `eng`, `EN`, `en`
             - `show_links` (bool, optional): Shows which urls are connected. Defaults to `False`
-            - `proxy_servers` (Optional[Dict[str, str]], optional): Proxies for accesing the EVDS
+            - `proxy_servers` (dict[str, str] | None, optional): Proxies for accesing the EVDS
             over them. Defaults to `None`.
             - `verify_certificates` (bool, optional): Enabling/Disabling of SSL security certificate
             checking during connection.
@@ -120,7 +138,7 @@ class Connector:
                 is eqaul to given precision if a fixed precision is given by 'precision' parameter.
                     - Maximum pandas DataFrame columns to be showed: `6`
                 - False: No screen representation optimizations.
-            - `precision` (Optional[int], optional): The operational precision of floating-point
+            - `precision` (int | None, optional): The operational precision of floating-point
             numbers.
                 - integer value: floating-point precisions are set to given value. for instance:
                 `1907.72231162012281817` is truncated to `1907.72` if the given precision is `2`,
@@ -133,16 +151,17 @@ class Connector:
         self.api_key: str = key if key else self._load_key()
         self.show_links: bool = show_links
         self.jupyter_mode: bool = jupyter_mode
-        self.precision: Union[None, int] = precision
+        self.precision: None | int = precision
         self.main_categories: pd.DataFrame = pd.DataFrame()
+        self._all_categories: pd.DataFrame = pd.DataFrame()
         self.session: requests.Session = self._create_session(secure=secure)
         self.data: pd.DataFrame = pd.DataFrame()
         self.first_request: bool = True
         self.internal_references_file_call = True
         self.references_file = self.cfg.reference_file
 
-        self.name_cache: Dict[str, str] = self._load_references()
-        self.proxy_servers: Dict[str, str] = proxy_servers
+        self.name_cache: dict[str, str] = self._load_references()
+        self.proxy_servers: dict[str, str] = proxy_servers
         self.verify_certificates: bool = verify_certificates
         self.secure: bool = secure
 
@@ -151,7 +170,6 @@ class Connector:
 
     @property
     def api_key(self) -> str:
-
         """Returns API Key"""
 
         return self._api_key
@@ -164,14 +182,12 @@ class Connector:
 
     @property
     def language(self) -> str:
-
         """Returns language code"""
 
         return self._language
 
     @language.setter
     def language(self, code: str) -> None:
-
         """Sets interface language and language related attributes"""
 
         self._language = self.cfg.defined_languages.get(code.strip(), None)
@@ -181,15 +197,13 @@ class Connector:
         self._language_changed(self._language)
 
     @property
-    def proxy_servers(self) -> Dict[str, str]:
-
+    def proxy_servers(self) -> dict[str, str]:
         """Returns proxy servers"""
 
         return self._proxy_servers
 
     @proxy_servers.setter
-    def proxy_servers(self, servers: Dict[str, str]) -> None:
-
+    def proxy_servers(self, servers: dict[str, str]) -> None:
         """Sets proxy servers"""
 
         if servers is None:
@@ -198,21 +212,19 @@ class Connector:
             return
 
         if not isinstance(servers, dict):
-            raise TypeError('Proxies must be given as a dict like {http: 127.0.0.1}')
+            raise TypeError("Proxies must be given as a dict like {http: 127.0.0.1}")
 
         self._proxy_servers = servers
         self.session.proxies = servers
 
     @property
     def verify_certificates(self) -> bool:
-
         """Returns certificate verification status"""
 
         return self._verify_certificates
 
     @verify_certificates.setter
     def verify_certificates(self, flag: bool) -> None:
-
         """Sets certificate verification True/False"""
 
         if flag is True:
@@ -224,12 +236,11 @@ class Connector:
 
     @property
     def jupyter_mode(self) -> bool:
-        """ Returns the Jupyter Notebook Mode state"""
+        """Returns the Jupyter Notebook Mode state"""
         return self._jupyter_mode
 
     @jupyter_mode.setter
     def jupyter_mode(self, switch: bool):
-
         """Enables/Disables Jupyter Notebook Represenatation Mode. This mode only affects the
         screen representation of data.
 
@@ -240,10 +251,10 @@ class Connector:
         """
 
         if switch:
-            #* Better screen representation for Jupyter Notebook users.
-            pd_options: Dict[str, Any] = {
-                                        'display.max_columns': 6,
-                                        'display.float_format': '{:.2f}'.format,
+            # * Better screen representation for Jupyter Notebook users.
+            pd_options: dict[str, Any] = {
+                "display.max_columns": 6,
+                "display.float_format": "{:.2f}".format,
             }
 
             for k, v in pd_options.items():
@@ -251,37 +262,32 @@ class Connector:
 
             self._jupyter_mode = True
         else:
-            #* Normal mode
-            pd.reset_option('display.float_format')
-            pd.reset_option('display.max_columns')
+            # * Normal mode
+            pd.reset_option("display.float_format")
+            pd.reset_option("display.max_columns")
 
             self._jupyter_mode = False
 
     @property
-    def precision(self) -> Union[None, int]:
-
+    def precision(self) -> None | int:
         """Returns the precision of floating-point numbers"""
 
         return self._precision
 
     @precision.setter
-    def precision(self, val: Union[None, int]) -> None:
-
+    def precision(self, val: None | int) -> None:
         """Sets the precision of floating-point numbers"""
 
         if val is None:
             self._precision = None
             return
         if not isinstance(val, int):
-            raise TypeError(
-                "Precision can be either an integer number or None (for EVDS default)"
-            )
+            raise TypeError("Precision can be either an integer number or None (for EVDS default)")
 
         self._precision = val
 
     @property
     def references_file(self) -> str:
-
         """Returns reference file location"""
 
         return self._references_file
@@ -308,7 +314,6 @@ class Connector:
         self._references_file = fname
 
     def _create_session(self, secure: bool) -> requests.Session:
-
         """_summary_
 
         Args:
@@ -323,12 +328,11 @@ class Connector:
             session.adapters.pop("https://", None)
             context: ssl.SSLContext = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
             context.options |= 0x4
-            session.mount('https://', EVDSHttpAdapter(context))
+            session.mount("https://", EVDSHttpAdapter(context))
 
         return session
 
     def _language_changed(self, language: str) -> None:
-
         """Variables that must be reloaded when the language is changed.
 
         Args:
@@ -339,12 +343,11 @@ class Connector:
         self.main_categories = self._get_main_categories()
         self.search_engine.language = language
 
-    def _load_references(self) -> Dict[str, str]:
-
+    def _load_references(self) -> dict[str, str]:
         """Load name references into memory from the references file.
 
         Returns:
-            - Dict[str, str]: name references
+            - dict[str, str]: name references
         """
 
         corrupted_file: bool = False
@@ -354,9 +357,9 @@ class Connector:
 
         with open(self.references_file, "r", encoding="utf-8") as f:
             try:
-                references: Dict[str, str] = json.load(f)
+                references: dict[str, str] = json.load(f)
             except JSONDecodeError:
-                print('JSON file that keeps the references can not be decoded and is removed!')
+                print("JSON file that keeps the references can not be decoded and is removed!")
                 corrupted_file = True
 
         if corrupted_file:
@@ -365,12 +368,11 @@ class Connector:
 
         return references
 
-    def _load_key(self) -> None:
-
+    def _load_key(self) -> str:
         """Load name references into memory from the references file.
 
         Returns:
-            - Dict[str, str]: name references
+            - dict[str, str]: name references
         """
 
         corrupted_file: bool = False
@@ -385,9 +387,9 @@ class Connector:
 
         with open(self.cfg.key_file, "r", encoding="utf-8") as f:
             try:
-                key: str = json.load(f)['key']
+                key: str = json.load(f)["key"]
             except JSONDecodeError:
-                print('JSON file that keeps the API KEY can not be decoded and is removed!')
+                print("JSON file that keeps the API KEY can not be decoded and is removed!")
                 corrupted_file = True
 
         if corrupted_file:
@@ -400,60 +402,61 @@ class Connector:
         return key
 
     def _clear_referencs_in_memory(self) -> None:
-
         """Clears references in memory"""
 
         self.name_cache = {}
 
     def _get_main_categories(self) -> pd.DataFrame:
-
         """Returns main categories of EVDS Service Database.
 
         Returns:
            - DataFrame: Main categories of EVDS database.
         """
 
-        extensions: Dict[str, str] = dict(key=self.api_key, type='json')
+        extensions: dict[str, str] = dict(type="json")
         response: bytes = self._get_response(
-            self.cfg.url_main_categories,
-            extensions=extensions,
-            type_="main_categories"
-            )
+            self.cfg.url_main_categories, extensions=extensions, type_="main_categories"
+        )
 
         id_field: str = self.cfg.category_id
         title_field: str = self.cfg.topic_title + "_" + self.language
-        nas: List[str] = self.cfg.not_available_categories
+        nas: list[str] = self.cfg.not_available_categories
         index_name: str = "Index"
 
         main_categories_json: JSONType = load_json(response)
-        required_columns: List[str] = [id_field, title_field]
-        main_categories: pd.DataFrame = pd.DataFrame(main_categories_json)[required_columns]
-        main_categories = as_real(main_categories, "int16", id_field)
+
+        all_categories: pd.DataFrame = pd.DataFrame(main_categories_json)
+        if "UST_CATEGORY_ID" in all_categories.columns:
+            all_categories[id_field] = pd.to_numeric(all_categories[id_field], errors="coerce")
+            all_categories["UST_CATEGORY_ID"] = pd.to_numeric(
+                all_categories["UST_CATEGORY_ID"], errors="coerce"
+            )
+            self._all_categories = all_categories
+
+        required_columns: list[str] = [id_field, title_field]
+        main_categories: pd.DataFrame = all_categories[required_columns].copy()
+        main_categories = as_real(main_categories, "int32", id_field)
         main_categories.index.name = index_name
         available_main_categories: pd.DataFrame = main_categories[
             ~main_categories[id_field].isin(nas)
         ]
         return available_main_categories
 
-    def _find_sub_category(
-                           self,
-                           main_category: Union[int, str] = None
-    ) -> Dict[str, Union[str, int]]:
-
+    def _find_sub_category(self, main_category: int | str = None) -> dict[str, str | int]:
         """Returns sub category parameters for given main category.
 
         Args:
-           - main_category (Union[int, str]]): Main category name or Main Category ID.
+           - main_category (int | str]): Main category name or Main Category ID.
 
         Raises:
            - SubCategoryNotFoundException: When the category is not found.
            - ValueError: When an unappropriate category identifier is given.
 
         Returns:
-           - Dict[str, Union[str, int]]: Parameter extensions for request.
+           - dict[str, str | int]: Parameter extensions for request.
         """
 
-        extensions: Dict[str, Union[str, int]] = {}
+        extensions: dict[str, str | int] = {}
         title: str = self.cfg.topic_title + "_" + self.language
         id_: str = self.cfg.category_id
 
@@ -461,9 +464,9 @@ class Connector:
             main_category = int(main_category)
 
         if isinstance(main_category, int):
-            available_ids: List[int] = list(self.main_categories[id_])
+            available_ids: list[int] = list(self.main_categories[id_])
             if main_category in available_ids:
-                extensions = dict(key=self.api_key, mode=2, code=main_category, type='json')
+                extensions = dict(mode=2, code=main_category, type="json")
         elif isinstance(main_category, str):
             try:
                 code: int = self.main_categories[
@@ -475,7 +478,7 @@ class Connector:
                     f"Main Categories."
                 ) from None
 
-            extensions = dict(key=self.api_key, mode=2, code=code, type='json')
+            extensions = dict(mode=2, code=code, type="json")
 
         else:
             raise ValueError(
@@ -490,18 +493,36 @@ class Connector:
 
         return extensions
 
-    def _create_trans_agg_param(
-                                self,
-                                functions: List[Union[str, int]],
-                                series_count: int,
-                                type_: str,
-                                delimiter: str = "-",
-    ) -> str:
+    def _get_child_category_ids(self, parent_id: int | None) -> list[int]:
+        """Returns child category IDs for a given parent category ID.
 
+        Args:
+            parent_id: The parent category ID.
+
+        Returns:
+            List of child category IDs, empty if none found.
+        """
+        if parent_id is None or self._all_categories.empty:
+            return []
+
+        parent_id = int(parent_id)
+        id_field: str = self.cfg.category_id
+        children = self._all_categories[self._all_categories["UST_CATEGORY_ID"] == parent_id]
+        if children.empty:
+            return []
+        return [int(cid) for cid in children[id_field].tolist()]
+
+    def _create_trans_agg_param(
+        self,
+        functions: list[str | int],
+        series_count: int,
+        type_: str,
+        delimiter: str = "-",
+    ) -> str:
         """Returns request parameters for transformation and aggregation functions.
 
         Args:
-            - functions List[Union[str, int]]: Transformation or Aggregation Functions given.
+            - functions list[str | int]: Transformation or Aggregation Functions given.
                 - None or not given: No any transformation/aggregation function is applied to
                 requested data.
                 - List or Tuple: Individual transformation/aggregation functions for every series
@@ -518,44 +539,40 @@ class Connector:
             - str: Transformation/Aggregation function parameters for API request.
         """
 
-        functions_param: str = ''
+        functions_param: str = ""
 
         if not all(functions):
             # Default transformation/aggregation function (None)
-            return ''
+            return ""
 
         if series_count != len(functions):
             if len(functions) != 1:
                 raise UnmatchingParameterSizeException(
-                    f'{type_.title()} functions count (given: {len(functions)}) must be equal '
-                    f'to series count (given: {series_count}) if {type_.title()} functions '
-                    f'are given individualy for each series.'
+                    f"{type_.title()} functions count (given: {len(functions)}) must be equal "
+                    f"to series count (given: {series_count}) if {type_.title()} functions "
+                    f"are given individualy for each series."
                 )
             else:
                 # The same transformation/aggregation function for all series
                 functions_param = join_sequentials(
                     [str(function) for function in functions for i in range(series_count)],
-                    delimiter=delimiter
+                    delimiter=delimiter,
                 )
         else:
             functions_param = join_sequentials(
-                [str(function) for function in functions],
-                delimiter=delimiter
+                [str(function) for function in functions], delimiter=delimiter
             )
 
         return functions_param
 
     def _find_real_trans_agg_functions(
-                                       self,
-                                       given_functions: List[Union[str, int]],
-                                       type_: str
-    ) -> List[str]:
-
+        self, given_functions: list[str | int], type_: str
+    ) -> list[str]:
         """Checks the definition status of given transformation or aggregation function(s) and
         returns related values corresponding to them.
 
         Args:
-            - given_functions List[Union[str, int]]:
+            - given_functions list[str | int]:
             Given transformation or aggregation function(s).
             - type_ (str): Type of the function(s) to be definition checked:
                 - "transformation" for Transformation Functions.
@@ -573,13 +590,13 @@ class Connector:
             are not defined.
 
         Returns:
-            List[str]: API's function definition key(s) for given functions.
+            list[str]: API's function definition key(s) for given functions.
         """
 
-        functions: Union[str, List[str]] = []
+        functions: str | list[str] = []
 
         if not all(given_functions):
-            return ['']
+            return [""]
 
         if type_ == "transformation":
             # ensure all types are str
@@ -590,7 +607,7 @@ class Connector:
             raise ValueError('type_ parameter must be either "transformation" or "aggregation"')
 
         if isinstance(given_functions, Sequence):
-            str_functions: List[str] = [str(val) for val in given_functions]
+            str_functions: list[str] = [str(val) for val in given_functions]
             for function in str_functions:
                 for t in defined_functions:
                     if function in t:
@@ -599,24 +616,23 @@ class Connector:
                 if type_ == "transformation":
                     self.show_transformation_references()
                     raise UndefinedTransformationFunctionException(
-                        f'One (or more) of the transformation function(s) in {given_functions} is '
-                        f'undefined. Plese check above transformation functions map.'
+                        f"One (or more) of the transformation function(s) in {given_functions} is "
+                        f"undefined. Plese check above transformation functions map."
                     )
                 elif type_ == "aggregation":
                     self.show_aggregation_references()
                     raise UndefinedAggregationFunctionException(
-                        f'One (or more) of the aggregation function(s) in {given_functions} is '
-                        f'undefined. Plese check above aggregation functions map.'
+                        f"One (or more) of the aggregation function(s) in {given_functions} is "
+                        f"undefined. Plese check above aggregation functions map."
                     )
 
         return functions
 
-    def _find_real_frequency(self, given_frequency: Union[None, str, int]) -> str:
-
+    def _find_real_frequency(self, given_frequency: None | str | int) -> str:
         """Returns a series frequency that is currently identified on EVDS API server.
 
         Args:
-            - given_frequency (Union[None, str, int]): Can be in various types.
+            - given_frequency (None | str | int): Can be in various types.
                 - None: The default frequency is returned.
                 - String: The matching frequency is returned.
                     - ""  if not anything given or given string is "default" or "0"
@@ -658,11 +674,8 @@ class Connector:
         return frequency
 
     def _parse_series_names(
-                            self,
-                            series: Union[str, Sequence[str]],
-                            check_references: bool = True
-    ) -> Tuple[List[str], List[str]]:
-
+        self, series: str | Sequence[str], check_references: bool = True
+    ) -> tuple[list[str], list[str]]:
         """Checks given series names and returns a list of series if it could be done.
 
         Args:
@@ -675,11 +688,11 @@ class Connector:
             - TypeError: If given container can not be converted into a list.
 
         Returns:
-            Tuple[List[str], List[str]]: A tuple consisting of
+            tuple[list[str], list[str]]: A tuple consisting of
             (real_series_names, given_series_names)
         """
 
-        real_series: List[str] = []
+        real_series: list[str] = []
         if isinstance(series, str):
             names: str = series.strip().split(",")
             if len(names) == 1:
@@ -697,38 +710,38 @@ class Connector:
             )
 
         # store given names as old names for further use like managing references deleting.
-        given_names: List[str] = real_series
+        given_names: list[str] = real_series
 
         # check references
         if check_references:
             real_series = [
                 name if name not in self.name_cache else self.name_cache[name]
-                    for name in real_series
+                for name in real_series
             ]
 
         return real_series, given_names
 
     def _parse_trans_agg_names(
-                               self,
-                               functions: Union[str, None, Sequence[str]],
-    ) -> List[str]:
+        self,
+        functions: str | None | Sequence[str],
+    ) -> list[str]:
         """Returns parsed transformation or aggregation functions names from given ones.
 
         Args:
-            - functions (Union[str, None, Sequence[str]]):
+            - functions (str | None | Sequence[str]):
             given transformation/aggregation functions
 
         Raises:
             - TypeError: If an unsupported type of names is given.
 
         Returns:
-            - List[str]: List of parsed aggregation or transformation functions.
+            - list[str]: List of parsed aggregation or transformation functions.
         """
 
         if functions is None:
-            return ['']
+            return [""]
 
-        real_functions: List[str] = []
+        real_functions: list[str] = []
         if isinstance(functions, str):
             names: str = functions.strip().split(",")
             if len(names) == 1:
@@ -750,11 +763,8 @@ class Connector:
         return real_functions
 
     def _insert_originals(
-                       self,
-                       series: List[str],
-                       functions: List[str]
-    ) -> Tuple[List[str], List[str]]:
-
+        self, series: list[str], functions: list[str]
+    ) -> tuple[list[str], list[str]]:
         """Returns Transformation/Aggregation parameters adding original series to them
         if it's not included.
 
@@ -768,17 +778,17 @@ class Connector:
         # series has been already checked and assured that it's a Sequence type except string.
         # functions can be both transformation and aggregation functions types.
 
-        extended_functions: List[str] = []
-        extended_series: List[str] = []
+        extended_functions: list[str] = []
+        extended_series: list[str] = []
 
         if not all(functions):
             return extended_series, extended_functions
 
         if len(functions) != 1 and len(functions) != len(series):
             raise UnmatchingParameterSizeException(
-                f'Transformation/Aggregations functions count (given: {len(functions)}) '
-                f'must be equal to series count (given: {len(series)}) if transformation '
-                f'or aggregation functions are given individualy.'
+                f"Transformation/Aggregations functions count (given: {len(functions)}) "
+                f"must be equal to series count (given: {len(series)}) if transformation "
+                f"or aggregation functions are given individualy."
             )
 
         # orginal api parameters comes here so, need to check just "0"
@@ -797,27 +807,33 @@ class Connector:
             extended_series = series * 2
             extended_functions = [
                 "0" if i < len(series) else function
-                    for function in functions
-                        for i in range(len(extended_series))
+                for function in functions
+                for i in range(len(extended_series))
             ]
 
         if not (extended_series and extended_functions):
             raise UnmatchingParameterSizeException(
-                f'Transformation/Aggregations functions count (given: {len(functions)}) '
-                f'must be equal to series count (given: {len(series)}) if transformation '
-                f'or aggregation functions are given individualy.'
+                f"Transformation/Aggregations functions count (given: {len(functions)}) "
+                f"must be equal to series count (given: {len(series)}) if transformation "
+                f"or aggregation functions are given individualy."
             )
 
         return extended_series, extended_functions
 
-    def _get_response(self, url: str, extensions: Dict[str, str], type_: str) -> bytes:
-
+    def _get_response(
+        self,
+        url: str,
+        extensions: dict[str, str],
+        type_: str,
+        max_retries: int = 3,
+    ) -> bytes:
         """Makes a GET request towards the API server and returns the response given.
 
         Args:
             - url (str): Base API URL to be connected.
-            - extensions (Dict[str, str]): url extensions which specifies the requested data and
+            - extensions (dict[str, str]): url extensions which specifies the requested data and
             its frequency/transformations/aggregations/etc.
+            - max_retries (int): Maximum number of retry attempts on transient failures.
 
         Raises:
             - WrongAPIKeyException: for APIKEY related issues.
@@ -835,36 +851,57 @@ class Connector:
         if self.show_links:
             print(f"request: {api_url}")
 
-        try:
-            request: requests.Response = self.session.get(api_url,
-                                                          timeout=(5, 5),
-                                                          headers={"key":self.api_key}
-            )
-        except Timeout as ex:
+        last_exception: Exception = None
+        for attempt in range(max_retries):
+            try:
+                request: requests.Response = self.session.get(
+                    api_url, timeout=(10, 15), headers={"key": self.api_key}
+                )
+                break
+            except Timeout as ex:
+                last_exception = ex
+            except RequestException as ex:
+                last_exception = ex
+            except HTTPError as ex:
+                last_exception = ex
+
+            backoff: float = 2**attempt * 3
+            if attempt < max_retries - 1:
+                sleep(backoff)
+        else:
             print("url: ", api_url)
-            raise APIServiceConnectionException(
-                "A connection timeout has occured. Please check your network status and "
-                "be sure the EVDS website is currently on-line"
-            ) from ex
-        except RequestException as ex:
-            print("url: ", api_url)
-            raise APIServiceConnectionException(
-                "An unknown connection error has occured while your request is processed. "
-                "Please check your network status and be sure the EVDS website is currently on-line"
-            ) from ex
-        except HTTPError as ex:
-            print("url: ", api_url)
-            raise APIServiceConnectionException(
-                "A network error is occured while your request is processed."
-            ) from ex
+            if isinstance(last_exception, Timeout):
+                raise APIServiceConnectionException(
+                    "A connection timeout has occured after multiple retries. "
+                    "Please check your network status and "
+                    "be sure the EVDS website is currently on-line"
+                ) from last_exception
+            elif isinstance(last_exception, HTTPError):
+                raise APIServiceConnectionException(
+                    "A network error is occured while your request is processed."
+                ) from last_exception
+            else:
+                raise APIServiceConnectionException(
+                    "An unknown connection error has occured while your request is processed. "
+                    "Please check your network status and "
+                    "be sure the EVDS website is currently on-line"
+                ) from last_exception
 
         if request.status_code == 404:
             raise APIServiceConnectionException(
                 "EVDS API Server is currently down. Please retry later."
             )
 
+        if request.status_code == 429:
+            if max_retries > 0:
+                sleep(5)
+                return self._get_response(url, extensions, type_, max_retries=max_retries - 1)
+            raise APIServiceConnectionException(
+                "EVDS API rate limit exceeded. Please wait and retry later."
+            )
+
         if not request.status_code == 200:
-            print(f'request: {api_url}\nreturn:{request.status_code}\n')
+            print(f"request: {api_url}\nreturn:{request.status_code}\n")
 
             if self.first_request:
                 if request.status_code == 500:
@@ -898,35 +935,32 @@ class Connector:
 
         return request.content
 
-    def _generate_url_extensions(self, param_dict: Dict[str, str]) -> str:
-
+    def _generate_url_extensions(self, param_dict: dict[str, str]) -> str:
         """Returns extension text for the base API url.
 
         Args:
-            - param (Dict[str, str]): Parameters dictionary.
+            - param (dict[str, str]): Parameters dictionary.
 
         Returns:
             - str: string parameters that will be added to base API url as extension.
         """
 
-        url_extensions: str = ''.join(
-            [str(k) + '=' + str(v) + "&" if idx < len(param_dict) - 1 else str(k) + '=' + str(v)
-                    for idx, (k, v) in enumerate(param_dict.items())]
+        url_extensions: str = "".join(
+            [
+                str(k) + "=" + str(v) + "&" if idx < len(param_dict) - 1 else str(k) + "=" + str(v)
+                for idx, (k, v) in enumerate(param_dict.items())
+            ]
         )
 
         return url_extensions
 
     def _auto_save_name_references(
-                                   self,
-                                   old_names: Sequence[str],
-                                   new_names: Sequence[str],
-                                   original_names: Sequence[str]
+        self, old_names: Sequence[str], new_names: Sequence[str], original_names: Sequence[str]
     ) -> None:
-
         """Saves given reference names as mappings for real series names"""
 
         # API replaces "." with "_" in its JSON response therefore must be reversed back.
-        original_names: List[str] = [str(name).replace("_", ".") for name in original_names]
+        original_names: list[str] = [str(name).replace("_", ".") for name in original_names]
         # given names maybe already a reference_name so it must also be checked
         # in order to remove them from the cache
         old_names = list(old_names)
@@ -934,26 +968,25 @@ class Connector:
         new_names = list(new_names)
 
         self.save_name_references(
-                                  series_names=original_names,
-                                  reference_names=new_names,
-                                  old_reference_names=old_names,
-                                  check_names=False
+            series_names=original_names,
+            reference_names=new_names,
+            old_reference_names=old_names,
+            check_names=False,
         )
 
     def _auto_rename_columns(
-                             self,
-                             df: pd.DataFrame,
-                             names: List[str],
-                             transformations: str = '',
-                             aggregations: str = '',
-                             functions_separator: str = "-"
+        self,
+        df: pd.DataFrame,
+        names: list[str],
+        transformations: str = "",
+        aggregations: str = "",
+        functions_separator: str = "-",
     ) -> pd.DataFrame:
-
         """Assigns reference names to columns if there are set before
 
         Args:
             - df (pd.DataFrame): created DataFrame with series in.
-            - names (List[str]): real series name from EVDS API.
+            - names (list[str]): real series name from EVDS API.
             - transformations (str, optional): Applied Transformations. Defaults to ''.
             - aggregations (str, optional): Applied Aggregations. Defaults to ''.
             - functions_separator (str, optional): Pararmeters separator. Defaults to "-".
@@ -962,18 +995,16 @@ class Connector:
             - pd.DataFrame: DataFrame column names changed with assigned reference names.
         """
 
-        auto_names: List[str] = []
+        auto_names: list[str] = []
 
         # need a reverse lookup
-        reversed_references: Dict[str, str] = {v: k for k, v in self.name_cache.items()}
+        reversed_references: dict[str, str] = {v: k for k, v in self.name_cache.items()}
         # if real series names have been referenced before?
-        ref_names: List[str] = [
-            name if name not in reversed_references else reversed_references[name]
-            for name in names
+        ref_names: list[str] = [
+            name if name not in reversed_references else reversed_references[name] for name in names
         ]
 
         if transformations or aggregations:
-
             if transformations:
                 ftype = transformations.split(functions_separator)
                 reversed_funcs = {v: k for k, v in self.cfg.transformations_map.items()}
@@ -994,19 +1025,13 @@ class Connector:
                 df.columns = auto_names
 
         else:
-
             if len(df.columns) == len(ref_names):
                 auto_names = [name.upper() for name in ref_names]
                 df.columns = auto_names
 
         return df
 
-    def _show_references(
-                         self,
-                         references,
-                         reference_type: Optional[str] = "series"
-    ) -> None:
-
+    def _show_references(self, references, reference_type: str | None = "series") -> None:
         """Screen representation of series, transformation, and aggregation functions'
         reference names stored on disk."""
 
@@ -1015,8 +1040,8 @@ class Connector:
             return
 
         if reference_type == "series":
-            sorted_keys: List[str] = sorted(references, key=lambda key: key[0])
-            references: Dict[str, str] = {k: references[k] for k in sorted_keys}
+            sorted_keys: list[str] = sorted(references, key=lambda key: key[0])
+            references: dict[str, str] = {k: references[k] for k in sorted_keys}
 
             print(
                 "\nBelow references map have been created for further use. You can use reference "
@@ -1038,7 +1063,7 @@ class Connector:
                     original_name,
                 )
             else:
-                representation: str = ' or '.join(
+                representation: str = " or ".join(
                     (reference for reference in reference_name if isinstance(reference, str))
                 )
                 print(
@@ -1050,22 +1075,21 @@ class Connector:
         print("\n")
 
     def _get_series(
-                    self,
-                    series: Union[str, Sequence[str]],
-                    start_date: Optional[Union[str, datetime]] = None,
-                    end_date: Optional[Union[str, datetime, pd.Timestamp]] = None,
-                    period: Optional[str] = None,
-                    aggregations: Optional[Union[str, List[str], Tuple[str]]] = None,
-                    transformations: Optional[Union[str, List[str], Tuple[str]]] = None,
-                    keep_originals: bool = True,
-                    frequency: Optional[Union[str, int]] = None,
-                    new_names: Optional[Sequence[str]] = None,
-                    keep_references: bool = False,
-                    time_series: bool = True,
-                    ascending: bool = True,
-                    convert_to_bd: bool = True
+        self,
+        series: str | Sequence[str],
+        start_date: str | datetime | None = None,
+        end_date: str | datetime | pd.Timestamp | None = None,
+        period: str | None = None,
+        aggregations: str | list[str] | tuple[str] | None = None,
+        transformations: str | list[str] | tuple[str] | None = None,
+        keep_originals: bool = True,
+        frequency: str | int | None = None,
+        new_names: Sequence[str] | None = None,
+        keep_references: bool = False,
+        time_series: bool = True,
+        ascending: bool = True,
+        convert_to_bd: bool = True,
     ) -> pd.DataFrame:
-
         """A dummy function for get_series"""
 
         if transformations and aggregations:
@@ -1082,11 +1106,11 @@ class Connector:
         transformations = self._parse_trans_agg_names(transformations)
         aggregations = self._parse_trans_agg_names(aggregations)
 
-        transformations: Union[str, List[str]] = (
-            self._find_real_trans_agg_functions(transformations, type_='transformation')
+        transformations: str | list[str] = self._find_real_trans_agg_functions(
+            transformations, type_="transformation"
         )
-        aggregations: Union[str, List[str]] = (
-            self._find_real_trans_agg_functions(aggregations, type_='aggregation')
+        aggregations: str | list[str] = self._find_real_trans_agg_functions(
+            aggregations, type_="aggregation"
         )
         frequency = self._find_real_frequency(frequency)
 
@@ -1119,10 +1143,14 @@ class Connector:
             functions=transformations, series_count=series_count, type_="transformation"
         )
 
-        params: Dict[str, str] = dict(
-            key=self.api_key, series=str_series, startDate=start_date, endDate=end_date,
-            type='json', formulas=transformations_param, aggregationTypes=aggregations_param,
-            frequency=frequency
+        params: dict[str, str] = dict(
+            series=str_series,
+            startDate=start_date,
+            endDate=end_date,
+            type="json",
+            formulas=transformations_param,
+            aggregationTypes=aggregations_param,
+            frequency=frequency,
         )
 
         data: bytes = self._get_response(url=self.cfg.url_series, extensions=params, type_="series")
@@ -1133,12 +1161,12 @@ class Connector:
         # Clear unnecessary fields
         df = drop_columns(df, [self.cfg.unixtime, self.cfg.yearweek])
         # Ensure all numerical fields are represented as float32 type in DataFrame
-        df = as_real(df, 'float32')
+        df = as_real(df, "float32")
         # Convert to time series
         if time_series:
             df = convert_to_time_series(df)
         else:
-            df.rename(columns={'Tarih': 'Date'}, errors='ignore', inplace=True)
+            df.rename(columns={"Tarih": "Date"}, errors="ignore", inplace=True)
         # Drop columns consisting of all NAs
         df = drop_na_columns(df)
         # Sort values
@@ -1147,11 +1175,9 @@ class Connector:
         if (new_names and keep_references) and not (all(transformations) or all(aggregations)):
             # series names can be misleading if any transformation or aggregation is applied to
             # original series.
-            #if not (transformations and aggregations):
+            # if not (transformations and aggregations):
             self._auto_save_name_references(
-                                            old_names=old_names,
-                                            new_names=new_names,
-                                            original_names=df.columns
+                old_names=old_names, new_names=new_names, original_names=df.columns
             )
         # Change column names if supplied
         if new_names and time_series:
@@ -1172,8 +1198,7 @@ class Connector:
 
         return df
 
-    def save_key(self, key: Optional[str] = None) -> None:
-
+    def save_key(self, key: str | None = None) -> None:
         """Saves provided key to disk that is loaded automatically while instantiation if any other
         key is not supplied explicitly.
 
@@ -1193,49 +1218,36 @@ class Connector:
         print(f"{key} has been saved to -> {self.cfg.key_file}")
 
     def show_transformation_references(self) -> None:
-
         """Shows current transformation functions map that is used by EVDS API
         to determine the frequency of a series.
         """
         self._show_references(
-                              references=self.cfg.transformations_map,
-                              reference_type="transformation function"
+            references=self.cfg.transformations_map, reference_type="transformation function"
         )
 
     def show_aggregation_references(self) -> None:
-
         """Shows current aggregation functions map that is used by EVDS API
         to determine the frequency of a series.
         """
         self._show_references(
-                              references=self.cfg.aggregations_map,
-                              reference_type="aggregation function"
+            references=self.cfg.aggregations_map, reference_type="aggregation function"
         )
 
     def show_frequency_references(self) -> None:
-
         """Shows current frequency reference mapping."""
 
-        self._show_references(
-                              references=self.cfg.frequency_map,
-                              reference_type="frequency"
-        )
+        self._show_references(references=self.cfg.frequency_map, reference_type="frequency")
 
     def show_name_references(self) -> None:
-
         """Shows current series names reference mapping."""
 
-        self._show_references(
-                              references=self.name_cache,
-                              reference_type="series"
-        )
+        self._show_references(references=self.name_cache, reference_type="series")
 
     def get_main_categories(
-                            self,
-                            as_dict: bool = False,
-                            raw: bool = False,
-    ) -> Union[pd.DataFrame, JSONType, Dict]:
-
+        self,
+        as_dict: bool = False,
+        raw: bool = False,
+    ) -> pd.DataFrame | JSONType | dict:
         """Returns main data categories defined on EVDS in different formats
 
         Args:
@@ -1248,7 +1260,7 @@ class Connector:
             - AmbiguousOutputTypeException: If both as_dict and as_raw is given True
 
         Returns:
-            - Union[pd.DataFrame, JSONType, Dict]: EVDS Service Main Categories.
+            - pd.DataFrame | JSONType | dict: EVDS Service Main Categories.
         """
 
         if as_dict and raw:
@@ -1259,12 +1271,12 @@ class Connector:
         if not (as_dict or raw):
             return self.main_categories
 
-        original_dict: Dict[Dict[int, int], Dict[int, str]] = self.main_categories.to_dict()
+        original_dict: dict[dict[int, int], dict[int, str]] = self.main_categories.to_dict()
         category_id: str = self.cfg.category_id
         title: str = self.cfg.topic_title + "_" + self.language
-        main_dict: Dict[int, str] = {
+        main_dict: dict[int, str] = {
             original_dict[category_id][i]: original_dict[title][i]
-                for i in range(len(original_dict[category_id]))
+            for i in range(len(original_dict[category_id]))
         }
 
         if raw:
@@ -1273,17 +1285,16 @@ class Connector:
         return main_dict
 
     def get_sub_categories(
-                           self,
-                           main_category: Union[int, str],
-                           as_dict: bool = False,
-                           raw: bool = False,
-                           verbose: bool = False,
-    ) -> Union[pd.DataFrame, JSONType, Dict]:
-
+        self,
+        main_category: int | str,
+        as_dict: bool = False,
+        raw: bool = False,
+        verbose: bool = False,
+    ) -> pd.DataFrame | JSONType | dict[str, Any]:
         """Returns sub-categories of main categories as DataFrame (or other types supported).
 
         Args:
-            - main_category (Union[int, str]]): Could be a main category ID
+            - main_category (int | str]): Could be a main category ID
             or an actual main category name.
                 - integer: returns sub-categories which given value corresponds to main category ID.
                 - string: returns sub-categories which belongs to given main category name.
@@ -1298,7 +1309,7 @@ class Connector:
             - SubCategoryNotFoundException: If provided sub-category is not found on EVDS
 
         Returns:
-           - Union[pd.DataFrame, JSONType, Dict]: Sub-Categories which given main categories include
+           - pd.DataFrame | JSONType | dict: Sub-Categories which given main categories include
            in.
         """
 
@@ -1307,27 +1318,41 @@ class Connector:
                 "Output type is ambiguous. Please select either 'raw' or 'dict' type."
             )
 
-        params: Dict[str, Union[str, int]] = self._find_sub_category(main_category)
+        params: dict[str, str | int] = self._find_sub_category(main_category)
         sub_categories: bytes = self._get_response(
-            url=self.cfg.url_sub_categories,
-            extensions=params,
-            type_="sub_categories"
+            url=self.cfg.url_sub_categories, extensions=params, type_="sub_categories"
         )
         json_sub_categories: JSONType = load_json(sub_categories)
 
         if not json_sub_categories:
+            child_ids = self._get_child_category_ids(params.get("code"))
+            if child_ids:
+                json_sub_categories = []
+                for child_id in child_ids:
+                    child_params: dict[str, str | int] = dict(mode=2, code=child_id, type="json")
+                    child_response: bytes = self._get_response(
+                        url=self.cfg.url_sub_categories,
+                        extensions=child_params,
+                        type_="sub_categories",
+                    )
+                    child_data: JSONType = load_json(child_response)
+                    if child_data:
+                        json_sub_categories.extend(child_data)
+
+        if not json_sub_categories:
             raise SubCategoryNotFoundException(
-            "Requested sub-category is not found on EVDS!\n"
-            "Are you sure you provided a correct sub-category name?"
-        ) from None
+                "Requested sub-category is not found on EVDS!\n"
+                "Are you sure you provided a correct sub-category name?"
+            ) from None
 
         if raw:
             return json_sub_categories
 
         datagroup_code: str = self.cfg.datagroup_code
         datagroup_name: str = (
-            self.cfg.datagroup_name if self.language == "TR"
-                else self.cfg.datagroup_name + "_" + self.language
+            self.cfg.datagroup_name
+            if self.language == "TR"
+            else self.cfg.datagroup_name + "_" + self.language
         )
         datagroup_frequency: str = self.cfg.frequency_str
         datagroup_id: str = self.cfg.category_id
@@ -1339,38 +1364,45 @@ class Connector:
                 try:
                     # there are some groups that don't have meaning like 'bie_bosluk1' and they can
                     # cause a KeyError when the fields are tried to get.
-                    sub_dict: Dict[str, str] = {
+                    sub_dict: dict[str, str] = {
                         sub[datagroup_code]: [
-                                            sub[datagroup_id], sub[datagroup_name],
-                                            sub[datagroup_frequency], sub[start_date],
-                                            sub[end_date]
-                                            ]
-                            for sub in json_sub_categories
+                            sub[datagroup_id],
+                            sub[datagroup_name],
+                            sub[datagroup_frequency],
+                            sub[start_date],
+                            sub[end_date],
+                        ]
+                        for sub in json_sub_categories
                     }
 
                 except KeyError:
-
                     if self.language == "TR":
-                        return {
-                            "TANIMSIZ": ["TANIMSIZ" for i in range(5)]
-                        }
+                        return {"TANIMSIZ": ["TANIMSIZ" for i in range(5)]}
                     else:
-                        return {
-                            "UNDEFINED": ["UNDEFINED" for i in range(5)]
-                        }
+                        return {"UNDEFINED": ["UNDEFINED" for i in range(5)]}
             else:
                 sub_dict = {
                     sub[datagroup_code]: [sub[field] for field in sub if field != datagroup_code]
-                        for sub in json_sub_categories
+                    for sub in json_sub_categories
                 }
 
             if self.language == "ENG":
-                sub_dict = {k: list(map(lambda val: self.cfg.english_frequency_map[val]
-                                if val in self.cfg.english_frequency_map else val, v))
-                                    for k, v in sub_dict.items()}
+                sub_dict = {
+                    k: list(
+                        map(
+                            lambda val: (
+                                self.cfg.english_frequency_map[val]
+                                if val in self.cfg.english_frequency_map
+                                else val
+                            ),
+                            v,
+                        )
+                    )
+                    for k, v in sub_dict.items()
+                }
             sub_dict = {
                 k: list(map(lambda val: parse_dates(val, ignore_errors=True), v))
-                    for k, v in sub_dict.items()
+                for k, v in sub_dict.items()
             }
 
             return sub_dict
@@ -1378,38 +1410,41 @@ class Connector:
         df: pd.DataFrame = pd.DataFrame(json_sub_categories)
 
         if self.language == "ENG":
-            df[datagroup_frequency] = pd.Series(
-                df.iloc[:, :][datagroup_frequency]
-                    ).map(self.cfg.english_frequency_map)
+            df[datagroup_frequency] = pd.Series(df.iloc[:, :][datagroup_frequency]).map(
+                self.cfg.english_frequency_map
+            )
 
         if verbose:
             return df
 
-        columns: List[str] = [
-            datagroup_code, datagroup_id, datagroup_name,
-            datagroup_frequency, start_date, end_date
+        columns: list[str] = [
+            datagroup_code,
+            datagroup_id,
+            datagroup_name,
+            datagroup_frequency,
+            start_date,
+            end_date,
         ]
 
         df = df[columns].iloc[:, :]
 
         try:
             # in case of any conversion error the string dates better to be preserved.
-            df[start_date] = pd.to_datetime(df[start_date].iloc[:], format='%d-%m-%Y')
-            df[end_date] = pd.to_datetime(df[end_date].iloc[:], format='%d-%m-%Y')
+            df[start_date] = pd.to_datetime(df[start_date].iloc[:], format="%d-%m-%Y")
+            df[end_date] = pd.to_datetime(df[end_date].iloc[:], format="%d-%m-%Y")
         except Exception:
             pass
 
         return df
 
     def get_groups(
-                   self,
-                   data_group_code: str,
-                   as_dict: bool = False,
-                   raw: bool = False,
-                   verbose: bool = False,
-                   parse_dt: bool = False
-    ) -> Union[pd.DataFrame, JSONType, Dict]:
-
+        self,
+        data_group_code: str,
+        as_dict: bool = False,
+        raw: bool = False,
+        verbose: bool = False,
+        parse_dt: bool = False,
+    ) -> pd.DataFrame | JSONType | dict[str, Any]:
         """Returns all series names, codes and observations start dates belong to given
         sub-categories as DataFrame (or other supported formats).
 
@@ -1430,7 +1465,7 @@ class Connector:
             - GroupNotFoundException: if provided group is not found on EVDS
 
         Returns:
-           - Union[pd.DataFrame, JSONType, Dict]: Series which given sub-category include in.
+           - pd.DataFrame | JSONType | dict: Series which given sub-category include in.
         """
 
         if as_dict and raw:
@@ -1438,26 +1473,25 @@ class Connector:
                 "Output type is ambiguous. Please select either 'raw' or 'dict' type."
             )
 
-        params: Dict[str, str] = dict(key=self.api_key, code=data_group_code, type='json')
+        params: dict[str, str] = dict(code=data_group_code, type="json")
         series: bytes = self._get_response(
-            url=self.cfg.url_groups,
-            extensions=params,
-            type_="groups"
+            url=self.cfg.url_groups, extensions=params, type_="groups"
         )
         json_groups: JSONType = load_json(series)
 
         if not json_groups:
             raise GroupNotFoundException(
-            "Requested group is not found on EVDS!\n"
-            "Are you sure you provided a correct group name?"
-        ) from None
+                "Requested group is not found on EVDS!\n"
+                "Are you sure you provided a correct group name?"
+            ) from None
 
         if raw:
             return json_groups
 
         series_name: str = (
-            self.cfg.series_name if self.language == "TR"
-                else self.cfg.series_name + "_" + self.language
+            self.cfg.series_name
+            if self.language == "TR"
+            else self.cfg.series_name + "_" + self.language
         )
         series_code: str = self.cfg.series_code
         frequency: str = self.cfg.frequency_str
@@ -1467,40 +1501,46 @@ class Connector:
         if as_dict:
             if not verbose:
                 try:
-                    sub_dict: Dict[str, str] = {
+                    sub_dict: dict[str, str] = {
                         sub[series_code]: [
-                                        sub[series_name], sub[frequency],
-                                        sub[start_date], sub[end_date]
-                                        ]
-                            for sub in json_groups
-                                for i in range(len(json_groups))
+                            sub[series_name],
+                            sub[frequency],
+                            sub[start_date],
+                            sub[end_date],
+                        ]
+                        for sub in json_groups
+                        for i in range(len(json_groups))
                     }
 
                 except KeyError:
-
                     if self.language == "TR":
-                        return {
-                            "TANIMSIZ": ["TANIMSIZ" for i in range(4)]
-                        }
+                        return {"TANIMSIZ": ["TANIMSIZ" for i in range(4)]}
                     else:
-                        return {
-                            "UNDEFINED": ["UNDEFINED" for i in range(4)]
-                        }
+                        return {"UNDEFINED": ["UNDEFINED" for i in range(4)]}
             else:
-
                 sub_dict = {
                     sub[series_code]: [sub[field] for field in sub if field != series_code]
-                        for sub in json_groups
+                    for sub in json_groups
                 }
 
             if self.language == "ENG":
-                sub_dict = {k: list(map(lambda val: self.cfg.english_frequency_map[val]
-                                if val in self.cfg.english_frequency_map else val, v))
-                                    for k, v in sub_dict.items()}
+                sub_dict = {
+                    k: list(
+                        map(
+                            lambda val: (
+                                self.cfg.english_frequency_map[val]
+                                if val in self.cfg.english_frequency_map
+                                else val
+                            ),
+                            v,
+                        )
+                    )
+                    for k, v in sub_dict.items()
+                }
             if parse_dt:
                 sub_dict = {
                     k: list(map(lambda val: parse_dates(val, ignore_errors=True), v))
-                        for k, v in sub_dict.items()
+                    for k, v in sub_dict.items()
                 }
 
             return sub_dict
@@ -1512,12 +1552,12 @@ class Connector:
 
         try:
             # in case of any conversion error the string dates better to be preserved.
-            df[start_date] = pd.to_datetime(df[start_date].iloc[:], format='%d-%m-%Y')
-            df[end_date] = pd.to_datetime(df[end_date].iloc[:], format='%d-%m-%Y')
+            df[start_date] = pd.to_datetime(df[start_date].iloc[:], format="%d-%m-%Y")
+            df[end_date] = pd.to_datetime(df[end_date].iloc[:], format="%d-%m-%Y")
         except Exception:
             pass
 
-        columns: List[str] = [series_name, series_code, frequency, start_date, end_date]
+        columns: list[str] = [series_name, series_code, frequency, start_date, end_date]
 
         if verbose:
             return df
@@ -1525,24 +1565,23 @@ class Connector:
         return df[columns]
 
     def get_series(
-                    self,
-                    series: Union[str, Sequence[str]],
-                    start_date: Optional[Union[str, datetime]] = None,
-                    end_date: Optional[Union[str, datetime, pd.Timestamp]] = None,
-                    period: Optional[str] = None,
-                    aggregations: Optional[Union[str, List[str], Tuple[str]]] = None,
-                    transformations: Optional[Union[str, List[str], Tuple[str]]] = None,
-                    keep_originals: bool = True,
-                    frequency: Optional[Union[str, int]] = None,
-                    new_names: Optional[Sequence[str]] = None,
-                    keep_references: bool = False,
-                    time_series: bool = True,
-                    ascending: bool = True,
-                    raw: bool = False,
-                    as_dict: bool = False,
-                    convert_to_bd: bool = True
-    ) -> Union[pd.DataFrame, JSONType, Dict]:
-
+        self,
+        series: str | Sequence[str],
+        start_date: str | datetime | None = None,
+        end_date: str | datetime | pd.Timestamp | None = None,
+        period: str | None = None,
+        aggregations: str | list[str] | tuple[str] | None = None,
+        transformations: str | list[str] | tuple[str] | None = None,
+        keep_originals: bool = True,
+        frequency: str | int | None = None,
+        new_names: Sequence[str] | None = None,
+        keep_references: bool = False,
+        time_series: bool = True,
+        ascending: bool = True,
+        raw: bool = False,
+        as_dict: bool = False,
+        convert_to_bd: bool = True,
+    ) -> pd.DataFrame | JSONType | dict:
         """Returns requested time series from the EVDS API Service.
 
         Args:
@@ -1554,19 +1593,19 @@ class Connector:
                     - Space separated string: "usdtry eurtry"
                     - In a Sequence type container like a list or tuple: ["usdtry", eurtry]
                     or ("usdtry", "eurtry")
-            - start_date (Optional[Union[str, datetime, pd.Timestamp]]): The date the time series
+            - start_date (str | datetime | pd.Timestamp | None): The date the time series
             data are started from.
                 - None or not specified: Will be set to current date.
                 - Could be given as a string in fromat 'dd-mm-YYYY', 'dd.mm.YYYY', 'dd/mm/YYYY'
                 - Could be given as a Python datetime object.
                 - Could be given as a Pandas TimeStamp object
-            - end_date (Optional[Union[str, datetime]], optional): The last observation date
+            - end_date (str | datetime | None, optional): The last observation date
             for requested time series. Defaults to None
                 - None or not specified: Will be set to current date.
                 - Could be given as a string in fromat 'dd-mm-YYYY', 'dd.mm.YYYY', 'dd/mm/YYYY'
                 - Could be given as a Python datetime object.
                 - Could be given as a Pandas TimeStamp object
-            - period (Optional[str]): A period string represents a period from current date.
+            - period (str | None): A period string represents a period from current date.
             Defaults to None.
                 - period strings consist of a num and a date identifier part. Num part can be any
                 integer number and the date part is a letter reflecting day, week, month and year.
@@ -1576,7 +1615,7 @@ class Connector:
                 - 1w or 1h -> represent the period: from 1 week ago - today, examples: 2w, 7w, 30w
                 - 1m or 1a -> represent the period: from 1 month ago - today, examples: 2m, 7m, 12m
                 - 1y -> represent the period: from 1 year ago - today, examples: 2y, 7y, 30y
-            - aggregations (Optional[Union[str, List[str], Tuple[str]]], optional):
+            - aggregations (Optional[str | list[str] | tuple[str]], optional):
             Aggregation functions wich will be applied to time series before returning.
             Defaults to None.
                 - None or not specified: No aggregation function is applied to time series.
@@ -1590,7 +1629,7 @@ class Connector:
                 - First: 'first'
                 - Last: 'last'
                 - Cumulative Sum: 'sum'
-            - transformations (Optional[Union[str, List[str], Tuple[str]]], optional):
+            - transformations (Optional[str | list[str] | tuple[str]], optional):
             Transformation functions that will be applied to time series before returning.
             Defaults to None.
                 - None or not specified: No transformation is applied to time series.
@@ -1613,7 +1652,7 @@ class Connector:
                 time series.
                 - False: Drop original series when a transformation function is applied to
                 time series.
-            - frequency (Optional[Union[str, int]], optional): Frequence of requested time series.
+            - frequency (str | int | None, optional): Frequence of requested time series.
             Defaults to None (as is). Available frequencies:
                 - Daily: 'daily" or "D"
                 - Business Daily: 'bdaily' or 'B'
@@ -1623,7 +1662,7 @@ class Connector:
                 - Quarterly: 'quarterly' or 'Q'
                 - Semiyearly: 'semiyearly' or '6M'
                 - Yearly: 'yearly' or 'Y'
-            - new_names (Optional[Sequence[str]], optional): Changes created DataFrame column names
+            - new_names (Sequence[str] | None, optional): Changes created DataFrame column names
             with given ones. Defaults to None.
             - keep_references (bool, optional): Stores given new column names (if supplied) as
             references to real series names on EVDS API service. The reference names can not be
@@ -1648,7 +1687,7 @@ class Connector:
             - x.get_series(["TP.FE.OKTG01", "TP.DK.USD.A.YTL"], start_date=1-1-2022)
 
         Returns:
-            - Union[pd.DataFrame, JSONType, Dict]: Time Series in requested format.
+            - pd.DataFrame | JSONType | dict: Time Series in requested format.
         """
 
         if as_dict and raw:
@@ -1656,8 +1695,8 @@ class Connector:
                 "Output type is ambiguous. Please select either 'raw' or 'dict' type."
             )
 
-        new_names_1: List[str] = []
-        new_names_2: List[str] = []
+        new_names_1: list[str] = []
+        new_names_2: list[str] = []
 
         if aggregations and keep_originals and time_series and new_names:
             new_names, _ = self._parse_series_names(new_names, check_references=False)
@@ -1676,7 +1715,7 @@ class Connector:
             keep_references=keep_references,
             time_series=time_series,
             ascending=ascending,
-            convert_to_bd=convert_to_bd
+            convert_to_bd=convert_to_bd,
         )
 
         # any other operations needed.
@@ -1694,8 +1733,8 @@ class Connector:
                 new_names=new_names_2 if new_names_2 else new_names,
                 time_series=time_series,
                 ascending=ascending,
-                convert_to_bd=convert_to_bd
-        )
+                convert_to_bd=convert_to_bd,
+            )
 
             result = pd.concat([originals, result], axis=1)
 
@@ -1711,23 +1750,22 @@ class Connector:
         return result
 
     def save_name_references(
-                             self,
-                             series_names: Union[str, Sequence[str]],
-                             reference_names: Union[str, Sequence[str]],
-                             old_reference_names: Optional[List[str]] = None,
-                             verbose: bool = True,
-                             check_names: bool = True
+        self,
+        series_names: str | Sequence[str],
+        reference_names: str | Sequence[str],
+        old_reference_names: list[str] | None = None,
+        verbose: bool = True,
+        check_names: bool = True,
     ) -> None:
-
         """Saves reference names for original series names in order them to be used as
         series names when getting data from the EVDS API server.
 
         Args:
-            - series_names (Union[str, Sequence[str]]): Original series name(s) on EVDS API.
+            - series_names (str | Sequence[str]): Original series name(s) on EVDS API.
             or names that currently saved as references.
                 - Can be given as a string for one series or in a Sequence type like. a list or
                 tuple. [seriesname1, seriesname2,...]
-            - reference_names (Union[str, Sequence[str]]): reference names for series.
+            - reference_names (str | Sequence[str]): reference names for series.
             Can be given as a string for one series or in a Sequence type like
             a list or tuple. [reference_name_1, reference_name_2,...]. Reference names
             must be made up of standard Latin chars [A-Za-z], digits [0-9] and
@@ -1767,9 +1805,11 @@ class Connector:
 
         allowed_chars: str = ascii_letters + digits + "_"
         check: bool = all(
-                            (True if char in allowed_chars else False
-                             for reference_name in reference_names
-                             for char in reference_name)
+            (
+                True if char in allowed_chars else False
+                for reference_name in reference_names
+                for char in reference_name
+            )
         )
         if not check:
             raise ValueError(
@@ -1782,22 +1822,19 @@ class Connector:
                 current_date: datetime = find_current_date(as_dt=True)
                 test_date: datetime = current_date - timedelta(days=31)
                 check: JSONType = self.get_series(
-                                                  start_date=test_date,
-                                                  series=series_names,
-                                                  keep_references=False,
-                                                  raw=True
+                    start_date=test_date, series=series_names, keep_references=False, raw=True
                 )
                 if not check:
                     raise UnknownTimeSeriesIdentifierException(
-                        f'One or more {series_names} is not found on API server.'
-                        f'Are you sure they are original series names or names currently in '
-                        f'references?'
+                        f"One or more {series_names} is not found on API server."
+                        f"Are you sure they are original series names or names currently in "
+                        f"references?"
                     )
             except Exception:
                 raise UnknownTimeSeriesIdentifierException(
-                    f'One or more {series_names} is not found on API server.'
-                    f'Are you sure they are original series names or names currently in '
-                    f'references?'
+                    f"One or more {series_names} is not found on API server."
+                    f"Are you sure they are original series names or names currently in "
+                    f"references?"
                 ) from None
 
         # check if given key already exists or value already assigned to other key.
@@ -1810,8 +1847,7 @@ class Connector:
 
         # check if given series name are original names or an old reference_name
         series_names = [
-            name if name not in self.name_cache else self.name_cache[name]
-            for name in series_names
+            name if name not in self.name_cache else self.name_cache[name] for name in series_names
         ]
         reference_names = [reference_name.strip() for reference_name in reference_names]
         # clear old reference names in name references
@@ -1823,27 +1859,25 @@ class Connector:
         write_json(self.references_file, self.name_cache)
 
         if verbose:
-            new_references: Dict[str, str] = dict(zip(reference_names, series_names))
+            new_references: dict[str, str] = dict(zip(reference_names, series_names))
             self._show_references(references=new_references)
 
-    def import_name_references(self, source: Union[str, Path]) -> None:
-
+    def import_name_references(self, source: str | Path) -> None:
         """Imports name references from an another location.
 
         Args:
-            - source (Union[str, Path]): absolute path for the name references file.
+            - source (str | Path): absolute path for the name references file.
         """
         copy_file(source, self.references_file)
         self.name_cache = self._load_references()
         self.show_name_references()
 
     def clear_references(
-                         self,
-                         keys: Optional[Sequence[str]] = None,
-                         confirm_all: bool = True,
-                         raise_errors: bool = True
+        self,
+        keys: Sequence[str] | None = None,
+        confirm_all: bool = True,
+        raise_errors: bool = True,
     ) -> None:
-
         """Clears all reference names given permanently."""
 
         if not self.name_cache:
@@ -1886,17 +1920,16 @@ class Connector:
         write_json(self.references_file, self.name_cache)
 
     def to_file(
-                self,
-                data: Optional[Union[pd.DataFrame, JSONType, Dict]] = None,
-                data_format: str = "csv",
-                filename: Optional[str] = None,
-                delimiter: str = ";",
+        self,
+        data: pd.DataFrame | JSONType | dict | None = None,
+        data_format: str = "csv",
+        filename: str | None = None,
+        delimiter: str = ";",
     ) -> None:
-
         """Saves the current data on disk in various formats.
 
         Args:
-            - data (Optional[Union[pd.DataFrame, JSONType, Dict]]): The data to be written on disk.
+            - data (pd.DataFrame | JSONType | dict | None): The data to be written on disk.
                 - can be given in Pandas DataFrame
                 - can be given in JSONType raw data
                 - can be given in dictionary.
@@ -1904,7 +1937,7 @@ class Connector:
                 - for csv file format: "csv"
                 - for Excel format: "excel", "xls", or "xlsx"
                 - for raw format: "raw" or "json"
-            - filename (Optional[str], optional): Output filename. Defaults to None.
+            - filename (str | None, optional): Output filename. Defaults to None.
                 - The bare filename for output. Output file is always saved on current
                 working directory. Therefore, the given filename shoul be just the bare
                 filename like "cppi" or "unemployment".
@@ -1915,8 +1948,7 @@ class Connector:
 
         write_data(data, data_format, filename, delimiter)
 
-    def where(self, keyword: str, n: int = 5, verbose: bool = True) -> Dict[str, str]:
-
+    def where(self, keyword: str, n: int = 5, verbose: bool = True) -> dict[str, str]:
         """Searches given words to determine related series identifications on EVDS API service.
 
         Args:
@@ -1928,13 +1960,12 @@ class Connector:
             - ValueError: if there is no keyword provided to search.
 
         Returns:
-            Union[None, Dict[str, str]]: Results dictionary.
+            None | dict[str, str]: Results dictionary.
         """
 
         return self.search_engine.where(keyword=keyword, n=n, verbose=verbose)
 
     def purge(self) -> None:
-
         """Purges all cached data from the memory"""
 
         self.data = pd.DataFrame()
