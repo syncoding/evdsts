@@ -125,7 +125,7 @@ ENGLISH_FREQUENCY_MAP: dict[str, str] = {
 }
 
 # * API Key file path to save and load API Key.
-KEY_FILE: str = str(Path.cwd() / Path("evds_api_key.json"))
+KEY_FILE: str = str(Path(__file__).parent.parent / Path("credentials") / Path("evds_api_key.json"))
 
 # * Name references file path to save and load references.
 REFERENCE_FILE: str = str(Path.cwd() / Path("evds_series_references.json"))
