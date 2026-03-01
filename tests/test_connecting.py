@@ -9,7 +9,10 @@ from evdsts.base.connecting import Connector
 
 connector = Connector()
 
-# print(connector.get_main_categories())
-# print(connector.get_sub_categories(25))
-# print(connector.get_groups("bie_altingr", raw=True))
-print(connector.get_series("TP.ALTINGR.ZCEYREK", start_date="01.01.2025"))
+print(connector.get_main_categories(serialize=True))
+# print(connector.get_sub_categories(25, serialize=True))
+# print(connector.get_groups("bie_altingr", serialize=True))
+# print(connector.where("döviz kuru"))
+# print(
+#     connector.get_series("TP.DK.USD.A.YTL", start_date="01.01.2025", serialize=True, frequency="W")
+# )

@@ -7,9 +7,9 @@ __version__ = "0.1.0"
 __mail__ = "synertic@gmail.com"
 
 import re
+from collections.abc import Callable, Sequence
 from datetime import datetime, timedelta
 from typing import Any
-from collections.abc import Callable, Sequence
 
 import numpy as np
 import pandas as pd
@@ -604,6 +604,11 @@ def crete_ts_index(df: pd.DataFrame, method: str) -> pd.Series:
                 continue
             # Weekly series is announced on every Friday
             freq = "W-FRI" if freq == "W" else freq
+            # pandas argument changes came with newer versions
+            freq = "QE" if freq == "Q" else freq
+            freq = "SME" if freq == "SM" else freq
+            freq = "6ME" if freq == "6M" else freq
+            freq = "YE" if freq == "Y" else freq
             # create a date range comprising the determined range start - end
             test_index: pd.DatetimeIndex = pd.date_range(start, end, freq=freq)
             # test if given time series exactly fit into the created range.

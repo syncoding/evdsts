@@ -3,6 +3,13 @@
 ## evdsts Changelog
 
 ### V.0.1.0
+ - Searching logic enhanced as lowering the archive series scores
+ - Searching returns the most 100 similar series as default
+ - ´serialize´ parameter added to `get_main_categories´, ´get_sub_categories´, ´get_groups´ and ´get_series´
+
+
+
+### V.0.1.0
  - EVDS 3.0 Compatibility
  - Turkish User Manual Added
  - Python 3.11 and 3.12 support has been dropped

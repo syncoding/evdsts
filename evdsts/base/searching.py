@@ -141,10 +141,9 @@ class SearchEngine:
                     "{:16.16}".format(informations[1]),
                     "{:11.11}".format(informations[2]),
                 )
-            except KeyError:
+            except (KeyError, TypeError):
                 # nevertheless show what is going on.
-                pprint(results)
-                break
+                pass
 
         print("-" * 112)
 
@@ -253,6 +252,11 @@ class SearchEngine:
         for key, info in self.index.items():
             score = 0
             exclude_list = []
+
+            # punishment: Archived series
+            if info[0].lower().find("arşiv") != -1:
+                score = 0
+                continue
 
             # bonus: match against series code (e.g. "USD" matches "TP.DK.USD.A.YTL")
             key_upper: str = key.upper().replace(".", " ")

@@ -1244,10 +1244,8 @@ class Connector:
         self._show_references(references=self.name_cache, reference_type="series")
 
     def get_main_categories(
-        self,
-        as_dict: bool = False,
-        raw: bool = False,
-    ) -> pd.DataFrame | JSONType | dict:
+        self, as_dict: bool = False, raw: bool = False, serialize: bool = False
+    ) -> pd.DataFrame | JSONType | dict[str, Any]:
         """Returns main data categories defined on EVDS in different formats
 
         Args:
@@ -1268,7 +1266,7 @@ class Connector:
                 "Output type is ambiguous. Please select either 'raw' or 'dict' type."
             )
 
-        if not (as_dict or raw):
+        if not (as_dict or raw or serialize):
             return self.main_categories
 
         original_dict: dict[dict[int, int], dict[int, str]] = self.main_categories.to_dict()
@@ -1290,6 +1288,7 @@ class Connector:
         as_dict: bool = False,
         raw: bool = False,
         verbose: bool = False,
+        serialize: bool = False,
     ) -> pd.DataFrame | JSONType | dict[str, Any]:
         """Returns sub-categories of main categories as DataFrame (or other types supported).
 
@@ -1359,7 +1358,7 @@ class Connector:
         start_date: str = self.cfg.start_date
         end_date: str = self.cfg.end_date
 
-        if as_dict:
+        if as_dict or serialize:
             if not verbose:
                 try:
                     # there are some groups that don't have meaning like 'bie_bosluk1' and they can
@@ -1444,6 +1443,7 @@ class Connector:
         raw: bool = False,
         verbose: bool = False,
         parse_dt: bool = False,
+        serialize: bool = False,
     ) -> pd.DataFrame | JSONType | dict[str, Any]:
         """Returns all series names, codes and observations start dates belong to given
         sub-categories as DataFrame (or other supported formats).
@@ -1498,7 +1498,7 @@ class Connector:
         start_date: str = self.cfg.start_date
         end_date: str = self.cfg.end_date
 
-        if as_dict:
+        if as_dict or serialize:
             if not verbose:
                 try:
                     sub_dict: dict[str, str] = {
@@ -1580,8 +1580,9 @@ class Connector:
         ascending: bool = True,
         raw: bool = False,
         as_dict: bool = False,
+        serialize: bool = False,
         convert_to_bd: bool = True,
-    ) -> pd.DataFrame | JSONType | dict:
+    ) -> pd.DataFrame | JSONType | dict[str, Any]:
         """Returns requested time series from the EVDS API Service.
 
         Args:
@@ -1677,6 +1678,7 @@ class Connector:
                 - False: Newest data first.
             - raw (bool, optional): Returns retrieved JSON data untouched. Defaults to False.
             - as_dict (bool, optional): Returns retrieved data as dictionary type. Defaults to False.
+            - serialize(bool, optional): Returns retrieved data as JSON serializable dict.
             - convert_to_bd (bool, optional): Checks start_date and end_date and returns the nearest
             business date if any of them encounters in weekend. Defaults to True.
 
@@ -1746,6 +1748,15 @@ class Connector:
 
         if as_dict:
             return result.to_dict(orient="dict")
+
+        if serialize:
+            return json.loads(
+                result.to_json(
+                    orient="split",
+                    index=True,
+                    date_format="iso",
+                )
+            )
 
         return result
 
@@ -1948,13 +1959,13 @@ class Connector:
 
         write_data(data, data_format, filename, delimiter)
 
-    def where(self, keyword: str, n: int = 5, verbose: bool = True) -> dict[str, str]:
+    def where(self, keyword: str, n: int = 100, verbose: bool = True) -> dict[str, str]:
         """Searches given words to determine related series identifications on EVDS API service.
 
         Args:
             - keyword (str): words to be searched (for instance: consumer price index)
             - verbose (bool, optional): Shows the results on screen if True. Defaults to True.
-            - n (int, optional): Number of maxiumum related results to be returned . Defaults to 5.
+            - n (int, optional): Number of maxiumum related results to be returned . Defaults to 50.
 
         Raises:
             - ValueError: if there is no keyword provided to search.
