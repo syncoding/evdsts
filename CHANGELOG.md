@@ -2,20 +2,19 @@
 
 ## evdsts Changelog
 
+### V.0.1.4
+ - Credentials Structure Change
+
 ### V.0.1.3
  - API KEY Credentials Location Change
 
-
 ### V.0.1.2
  - Doc Fix
-
 
 ### V.0.1.1
  - Searching logic enhanced as lowering the archive series scores
  - Searching returns the most 100 similar series as default
  - ´serialize´ parameter added to `get_main_categories`, `get_sub_categories`, `get_groups` and `get_series`
-
-
 
 ### V.0.1.0
  - EVDS 3.0 Compatibility
@@ -35,16 +34,13 @@
  - New Style Type Hinting
  - Various Small Bug Fixes
 
-
 ### V.1.0rc6
  - Python 3.8, 3.9 and 3.10 support has been dropped
  - Config has been migrated from setup.py to pyproject.toml
  - Index Update
 
-
 ### V.1.0rc5
  - Connection and read timeouts are increased
-
 
 ### V.1.0rc4
  - API SSL handshake fix
@@ -56,7 +52,6 @@
  - Reference tables fix
  - Internal class versioning
  - transformations and aggregations parsing fix
-
 
 ### V.1.0rc2
 - Bug Fixes in documentation
