@@ -200,12 +200,12 @@ connector = Connector(language='TR')  # anahtarınız diskten okunur.
 `where()` metodunun imzası:
 
 ```python
-def where(keyword: str, n: int = 5, verbose: bool = True) -> Dict[str, str]
+def where(keyword: str, n: int = 100, verbose: bool = True) -> Dict[str, str]
 ```
 
 1. `keyword`: aranacak kelimeler (örneğin: tüketici fiyat endeksi)
 2. `verbose`: `True` ise sonuçları ekranda gösterir. Varsayılan: `True`.
-3. `n`: Döndürülecek maksimum ilgili sonuç sayısı. Varsayılan: `5`.
+3. `n`: Döndürülecek maksimum ilgili sonuç sayısı. Varsayılan: `100`.
 
 
 __Örnekler (TR)__:
@@ -306,31 +306,38 @@ print(ana_kategoriler)
 # bu size aşağıdaki tabloyu temsil eden bir pandas DataFrame nesnesi verir.
 ```
 
-|Index| KATEGORİ ID|                       BAŞLIK                                    |
-|:---: |:---:       |----------------------------------------------------------------|
-|0	   |     1	    | PİYASA İSTATİSTİKLERİ                                          |
-|1	   |     2	    | DÖVİZ KURLARI                                                  |
-|2	   |     3	    | FAİZ İSTATİSTİKLERİ                                            |
-|3	   |     4	    | PARA VE BANKA İSTATİSTİKLERİ                                   |
-|4	   |     5	    | HAFTALIK MENKUL KIYMET İSTATİSTİKLERİ                          |
-|5	   |     12	    | FİNANSAL İSTATİSTİKLER                                         |
-|6	   |     13	    | TCMB BİLANÇO VERİLERİ                                         |
-|7	   |     14	    | FİYAT ENDEKSLERİ                                               |
-|8	   |     15	    | BEKLENTİ VE EĞİLİM ANKETLERİ                                  |
-|9	   |     18	    | ÖDEMELER DENGESİ ULUSLARARASI YATIRIM POZİSYONU                |
-|10    |     19	    | DIŞ TİCARET İSTATİSTİKLERİ                                     |
-|11    |     20	    | KAMU MALİYESİ                                                   |
-|12    |     21	    | ÜRETİM İSTATİSTİKLERİ                                          |
-|13    |     22	    | ÖDEME SİSTEMLERİ VE EMİSYON                                    |
-|14    |     23	    | İSTİHDAM İSTATİSTİKLERİ                                        |
-|15    |     6	    | DIŞ BORÇ İSTATİSTİKLERİ                                        |
-|16    |     7	    | ZORUNLU KARŞILIKLARA TABİ MEVDUAT VE KATILIM FONLARI           |
-|17    |     24	    | BIS KARŞILAŞTIRMALI ÜLKE İSTATİSTİKLERİ                        |
-|18    |     25	    | ALTIN İSTATİSTİKLERİ                                            |
-|19    |     26	    | KONUT VE İNŞAAT İSTATİSTİKLERİ                                 |
-|20    |     27	    | FİNANSAL HESAPLAR                                               |
-|21    |     28	    | TURİZM İSTATİSTİKLERİ                                           |
-|22    |     95	    | EVDS KULLANIM İSTATİSTİKLERİ                                    |
+|Index| KATEGORİ ID|                       BAŞLIK                                                    |
+|:---: |:---:       |-----------------------------------------------------------------------------|
+|0	   |     10	    | BEKLENTİ VE EĞİLİM ANKETLERİ                                               |
+|1	   |     1001   | BANKA KREDİLERİ EĞİLİM ANKETİ (TCMB)                                       |
+|2	   |     1002   | FİNANSAL HİZMETLER ANKETİ (TCMB)                                           |
+|...   |     ...    | ...                                                                         |
+|11    |     15	    | BÜYÜME, İSTİHDAM, KAMU MALİYESİ                                            |
+|...   |     ...    | ...                                                                         |
+|16    |     25	    | DÖVİZ KURLARI VE KIYMETLİ MADENLER                                         |
+|17    |     2502   | ALTIN İSTATİSTİKLERİ                                                        |
+|18    |     2503   | DİĞER EMTİA VERİLERİ                                                       |
+|19    |     2504   | REEL EFEKTİF DÖVİZ KURLARI (TCMB)                                          |
+|20    |     2501   | TCMB DÖVİZ KURLARI                                                         |
+|21    |     20	    | FİYAT ENDEKSLERİ                                                           |
+|...   |     ...    | ...                                                                         |
+|26    |     30	    | MERKEZ BANKASI BİLANÇO VE PİYASA VERİLERİ                                  |
+|...   |     ...    | ...                                                                         |
+|29    |     35	    | ÖDEME SİSTEMLERİ VE EMİSYON                                                |
+|...   |     ...    | ...                                                                         |
+|33    |     40	    | ÖDEMELER DENGESİ VE DIŞ İSTATİSTİKLER                                      |
+|...   |     ...    | ...                                                                         |
+|49    |     45	    | PARASAL VE FİNANSAL İSTATİSTİKLER                                          |
+|...   |     ...    | ...                                                                         |
+|76    |     50	    | REEL SEKTÖR İSTATİSTİKLERİ                                                  |
+|...   |     ...    | ...                                                                         |
+|91    |     55	    | ULUSLARARASI İSTATİSTİKLER                                                  |
+|...   |     ...    | ...                                                                         |
+|95    |     0	    | ARŞİV                                                                       |
+|...   |     ...    | ...                                                                         |
+
+> Not: API artık hiyerarşik bir kategori yapısı döndürmektedir. Yukarıdaki tablo kısaltılmıştır.
+> Tam liste için `get_main_categories()` metodunu kullanarak tüm kategorileri ve alt kategorileri görüntüleyebilirsiniz.
 
 
 Ana kategoriler ayrıca işlenmiş Python sözlükleri veya JSON dizileri olarak da istenebilir. Çekilen veriyi `Dict` türünde almak için `as_dict` bayrağını `True` olarak ayarlayabilir veya benzer şekilde ana kategorileri JSON dizisi olarak almak için `raw` bayrağını kullanabilirsiniz.
@@ -373,8 +380,8 @@ Varsayılan: `False`
 __Örnekler__:
 
 ```python
-# (2 = DÖVİZ KURLARI) ana kategoriler tablosundaki Kategori ID bölümüne göre.
-doviz_kurlari_alt = connector.get_sub_categories(2)
+# (2501 = TCMB DÖVİZ KURLARI) ana kategoriler tablosundaki Kategori ID bölümüne göre.
+doviz_kurlari_alt = connector.get_sub_categories(2501)
 
 ```
 
@@ -382,19 +389,16 @@ Bu size aşağıdaki tabloyu temsil eden bir `DataFrame` verir:
 
 |DATAGROUP_CODE  | CATEGORY_ID  |...    |START_DATE	|END_DATE   |
 |----------------|--------------|-------|-----------|-----------|
-|	bie_dkdovytl  |	    2	    |...	|1950-01-02	|2022-08-01 |
-|	bie_dkefkytl  |	    2	    |...	|1990-01-02	|2022-08-01 |
-|	bie_dkkurbil  |	    2	    |...	|2009-04-02	|2021-12-21 |
-|	bie_rktufey   |	    2	    |...	|1994-01-01	|2022-06-01 |
-|	bie_rkufey    |	    2	    |...	|1994-01-01	|2022-06-01 |
-|	bie_redkurigm |	    2	    |...	|2003-01-01	|2021-01-01 |
+|	bie_dkkurbil  |	    2501    |...	|2013-03-01	|2025-10-31 |
+|	bie_dkefkytl  |	    2501    |...	|1990-01-02	|2010-12-30 |
+|	bie_dkdovytl  |	    2501    |...	|1959-09-01	|2025-12-31 |
 
 > Not: Yukarıdaki tablo daha fazla sütun içermektedir ancak ekrana sığması için kısaltılmıştır.
 
 veya alternatif olarak aynı alt kategori verilerini almak için ana kategori adlarını kullanabilirsiniz.
 
 ```python
-doviz_kurlari_alt = connector.get_sub_categories("DÖVİZ KURLARI")
+doviz_kurlari_alt = connector.get_sub_categories("TCMB DÖVİZ KURLARI")
 
 ```
 > __İşlemin büyük/küçük harfe duyarlı olduğunu, bu nedenle kategori adlarının ana kategorilerde__
@@ -404,16 +408,16 @@ Alt kategoriler `dictionary` nesneleri, ham `JSON` veya `DataFrame` tablosunun d
 
 ```python
 # sözlük olarak
-alt_sozluk = connector.get_sub_categories("ÜRETİM İSTATİSTİKLERİ", as_dict=True)
+alt_sozluk = connector.get_sub_categories("REEL SEKTÖR İSTATİSTİKLERİ", as_dict=True)
 
 # ham JSON olarak
-alt_ham = connector.get_sub_categories("ÜRETİM İSTATİSTİKLERİ", raw=True)
+alt_ham = connector.get_sub_categories("REEL SEKTÖR İSTATİSTİKLERİ", raw=True)
 
 # DataFrame'in daha detaylı versiyonu
-alt_detayli = connector.get_sub_categories("ÜRETİM İSTATİSTİKLERİ", verbose=True)
+alt_detayli = connector.get_sub_categories("REEL SEKTÖR İSTATİSTİKLERİ", verbose=True)
 
 # yukarıdakilerin birleşik versiyonu
-kurlar_tumu = connector.get_sub_categories("DÖVİZ KURLARI", as_dict=True, verbose=True)
+kurlar_tumu = connector.get_sub_categories("TCMB DÖVİZ KURLARI", as_dict=True, verbose=True)
 ```
 
 
@@ -453,12 +457,12 @@ __Örnekler__:
 grup_efektifler = connector.get_groups("bie_dkdovytl")
 ```
 
-|SERIE_NAME_ENG	            |SERIE_CODE	    |FREQUENCY_STR    |START_DATE   |END_DATE  |
-|---------------------------|---------------|-----------------|-------------|----------|
-|(USD) US Dollar (Buying)	|TP.DK.USD.A.YTL|	DAILY	      |1950-01-02	|2022-08-01|
-|(USD) US Dollar (Selling)	|TP.DK.USD.S.YTL|	DAILY	      |1950-01-02	|2022-08-01|
-|(EUR) Euro (Buying)	    |TP.DK.EUR.A.YTL|	DAILY	      |1999-01-04	|2022-08-01|
-|(EUR) Euro (Selling)	    |TP.DK.EUR.S.YTL|	DAILY	      |1999-01-04	|2022-08-01|
+|SERIE_NAME                         |SERIE_CODE	    |FREQUENCY_STR    |START_DATE   |END_DATE  |
+|-----------------------------------|---------------|-----------------|-------------|----------|
+|(USD) ABD Doları (Döviz Alış)	    |TP.DK.USD.A.YTL|	GÜNLÜK	      |1950-01-02	|2026-03-02|
+|(USD) ABD Doları (Döviz Satış)	    |TP.DK.USD.S.YTL|	GÜNLÜK	      |1950-01-02	|2026-03-02|
+|(EUR) Euro (Döviz Alış)	        |TP.DK.EUR.A.YTL|	GÜNLÜK	      |1999-01-04	|2026-03-02|
+|(EUR) Euro (Döviz Satış)	        |TP.DK.EUR.S.YTL|	GÜNLÜK	      |1999-01-04	|2026-03-02|
 
 > Not: Yukarıdaki tablo daha fazla satır içermektedir ancak ekrana sığması için kısaltılmıştır.
 
@@ -466,16 +470,16 @@ Gruplar `dict` türü nesneler veya `JSON` türü ham veri olarak da istenebilir
 
 ```python
 # sözlük olarak
-gruplar_sozluk = connector.get_groups("bie_gsyhgycf", as_dict=True)
+gruplar_sozluk = connector.get_groups("bie_dkdovytl", as_dict=True)
 
 # JSON olarak
-gruplar_ham = connector.get_groups("bie_gsyhgycf", raw=True)
+gruplar_ham = connector.get_groups("bie_dkdovytl", raw=True)
 
 # verbose bayrağı ile daha detaylı grup verisi istenebilir.
-detayli_gruplar = connector.get_groups("bie_gsyhgycf", verbose=True)
+detayli_gruplar = connector.get_groups("bie_dkdovytl", verbose=True)
 
 # hem verbose hem de as_dict bayrakları birlikte verilerek detaylı sözlük istenebilir.
-detayli_sozluk = connector.get_groups("bie_gsyhgycf", as_dict=True, verbose=True)
+detayli_sozluk = connector.get_groups("bie_dkdovytl", as_dict=True, verbose=True)
 ```
 
 
@@ -1241,7 +1245,7 @@ Given data have been written on g:\My Drive\Dev\Active\evdsts\data_2022_07_19_21
 Benzer şekilde,
 
 ```python
-alt_kategoriler_df = connector.get_sub_categories("DÖVİZ KURLARI")
+alt_kategoriler_df = connector.get_sub_categories("TCMB DÖVİZ KURLARI")
 connector.to_file(data=alt_kategoriler_df, data_format='json')
 
 ```

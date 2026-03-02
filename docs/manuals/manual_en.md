@@ -214,12 +214,12 @@ the `evdsts` thanks to `where()` method.
 The fingerprint of the `where()` method is:
 
 ```python
-def where(keyword: str, n: int = 5, verbose: bool = True) -> Dict[str, str]
+def where(keyword: str, n: int = 100, verbose: bool = True) -> Dict[str, str]
 ```
 
 1. `keyword`: words to be searched (for instance: consumer price index)
 2. `verbose`: Shows the results on screen if `True`. Defaults to `True`.
-3. `n`: Number of maxiumum related results to be returned . Defaults to `5`.
+3. `n`: Number of maxiumum related results to be returned. Defaults to `100`.
 
 
 __Cases (EN)__:
@@ -322,31 +322,38 @@ print(main_categories)
 # this gives you a pandas DataFrame object representing below.
 ```
 
-|Index| CATEGORY ID|                       TITILE                                    |
-|:---: |:---:       |----------------------------------------------------------------|
-|0	   |     1	    | MARKET STATISTICS                                              |
-|1	   |     2	    | EXCHANGE RATES                                                 |
-|2	   |     3	    | INTEREST RATES                                                 |
-|3	   |     4	    | MONEY AND BANKING STATISTICS                                   |
-|4	   |     5	    | WEEKLY SECURITIES STATISTICS                                   |
-|5	   |     12	    | FINANCIAL STATISTICS                                           |
-|6	   |     13	    | CBRT BALANCE SHEET DATA                                        |
-|7	   |     14	    | PRICE INDICES                                                  |
-|8	   |     15	    | SURVEYS                                                        |
-|9	   |     18	    | BALANCE OF PAYMENTS INTERNATIONAL INVESTMENT POSITION          |
-|10    |     19	    | FOREIGN TRADE STATISTICS                                       |
-|11    |     20	    | PUBLIC FINANCE                                                 |
-|12    |     21	    | PRODUCTION STATISTICS                                          |
-|13    |     22	    | PAYMENT SYSTEMS AND EMISSION                                   |
-|14    |     23	    | EMPLOYMENT STATISTICS                                          |
-|15    |     6	    | EXTERNAL DEBT                                                  |
-|16    |     7	    | DEPOSITS AND PARTICIPATION FUNDS SUBJECT TO REQUIRED RESERVES  |
-|17    |     24	    | BIS COMPARATIVE COUNTRY STATISTICS                             |
-|18    |     25	    | GOLD STATISTICS                                                |
-|19    |     26	    | HOUSING AND CONSTRUCTION STATISTICS                            |
-|20    |     27	    | FINANCIAL ACCOUNTS                                             |
-|21    |     28	    | TOURISM STATISTICS                                             |
-|22    |     95	    | EVDS USAGE STATISTICS                                          |
+|Index| CATEGORY ID|                       TITLE                                                  |
+|:---: |:---:       |-----------------------------------------------------------------------------|
+|0	   |     10	    | EXPECTATION AND TENDENCY SURVEYS                                            |
+|1	   |     1001   | BANK LOANS TENDENCY SURVEY (CBRT)                                           |
+|2	   |     1002   | FINANCIAL SERVICES SURVEY (CBRT)                                            |
+|...   |     ...    | ...                                                                         |
+|11    |     15	    | GROWTH, EMPLOYMENT, PUBLIC FINANCE                                          |
+|...   |     ...    | ...                                                                         |
+|16    |     25	    | EXCHANGE RATES AND PRECIOUS METALS                                          |
+|17    |     2502   | GOLD STATISTICS                                                             |
+|18    |     2503   | OTHER COMMODITY DATA                                                        |
+|19    |     2504   | REAL EFFECTIVE EXCHANGE RATES (CBRT)                                        |
+|20    |     2501   | CENTRAL BANK EXCHANGE RATES                                                 |
+|21    |     20	    | PRICE INDICES                                                               |
+|...   |     ...    | ...                                                                         |
+|26    |     30	    | CENTRAL BANK BALANCE SHEET AND MARKET DATA                                  |
+|...   |     ...    | ...                                                                         |
+|29    |     35	    | PAYMENT SYSTEMS AND EMISSION                                                |
+|...   |     ...    | ...                                                                         |
+|33    |     40	    | BALANCE OF PAYMENTS AND EXTERNAL STATISTICS                                 |
+|...   |     ...    | ...                                                                         |
+|49    |     45	    | MONETARY AND FINANCIAL STATISTICS                                           |
+|...   |     ...    | ...                                                                         |
+|76    |     50	    | REAL SECTOR STATISTICS                                                      |
+|...   |     ...    | ...                                                                         |
+|91    |     55	    | INTERNATIONAL STATISTICS                                                    |
+|...   |     ...    | ...                                                                         |
+|95    |     0	    | ARCHIVE                                                                     |
+|...   |     ...    | ...                                                                         |
+
+> Note: The API now returns a hierarchical category structure. The above table is truncated.
+> Use `get_main_categories()` method to view all categories and sub-categories.
 
 
 Main categories can be also requested as processed Python dictionaries or JSON strings. You can set
@@ -393,8 +400,8 @@ Defaults to `False`
 __Cases__:
 
 ```python
-# (2 = EXCHANGE RATES) according to Category ID section of main categories table.
-exchange_rates_sub = connector.get_sub_categories(2)
+# (2501 = CENTRAL BANK EXCHANGE RATES) according to Category ID section of main categories table.
+exchange_rates_sub = connector.get_sub_categories(2501)
 
 ```
 
@@ -402,19 +409,16 @@ This gives you a `DataFrame` representin below:
 
 |DATAGROUP_CODE  | CATEGORY_ID  |...    |START_DATE	|END_DATE   |
 |----------------|--------------|-------|-----------|-----------|
-|	bie_dkdovytl  |	    2	    |...	|1950-01-02	|2022-08-01 |
-|	bie_dkefkytl  |	    2	    |...	|1990-01-02	|2022-08-01 |
-|	bie_dkkurbil  |	    2	    |...	|2009-04-02	|2021-12-21 |
-|	bie_rktufey   |	    2	    |...	|1994-01-01	|2022-06-01 |
-|	bie_rkufey    |	    2	    |...	|1994-01-01	|2022-06-01 |
-|	bie_redkurigm |	    2	    |...	|2003-01-01	|2021-01-01 |
+|	bie_dkkurbil  |	    2501    |...	|2013-03-01	|2025-10-31 |
+|	bie_dkefkytl  |	    2501    |...	|1990-01-02	|2010-12-30 |
+|	bie_dkdovytl  |	    2501    |...	|1959-09-01	|2025-12-31 |
 
 > Note: above table includes more columns but is truncated for data to be fitted the screen.
 
 or as an alternative you can use the main category names to get the same sub-categories data.
 
 ```python
-exchange_rates_sub = connector.get_sub_categories("EXCHANGE RATES")
+exchange_rates_sub = connector.get_sub_categories("CENTRAL BANK EXCHANGE RATES")
 
 ```
 > __Please note that the process is case-sensitive, therefore, the category names must be used__
@@ -425,16 +429,16 @@ the `DataFrame` sheet.
 
 ```python
 # as dictionary
-sub_dict = connector.get_sub_categories("PRODUCTION STATISTICS", as_dict=True)
+sub_dict = connector.get_sub_categories("REAL SECTOR STATISTICS", as_dict=True)
 
 # as raw JSON
-sub_raw = connector.get_sub_categories("PRODUCTION STATISTICS", raw=True)
+sub_raw = connector.get_sub_categories("REAL SECTOR STATISTICS", raw=True)
 
 # # as a more detailed version of DataFrame that includes all information on EDDS
-sub_detailed = connector.get_sub_categories("PRODUCTION STATISTICS", verbose=True)
+sub_detailed = connector.get_sub_categories("REAL SECTOR STATISTICS", verbose=True)
 
 # and a combined version of above.
-rates_all = connector.get_sub_categories("EXCHANGE RATES", as_dict=True, verbose=True)
+rates_all = connector.get_sub_categories("CENTRAL BANK EXCHANGE RATES", as_dict=True, verbose=True)
 ```
 
 
@@ -478,10 +482,10 @@ group_effectives = connector.get_groups("bie_dkdovytl")
 
 |SERIE_NAME_ENG	            |SERIE_CODE	    |FREQUENCY_STR    |START_DATE   |END_DATE  |
 |---------------------------|---------------|-----------------|-------------|----------|
-|(USD) US Dollar (Buying)	|TP.DK.USD.A.YTL|	DAILY	      |1950-01-02	|2022-08-01|
-|(USD) US Dollar (Selling)	|TP.DK.USD.S.YTL|	DAILY	      |1950-01-02	|2022-08-01|
-|(EUR) Euro (Buying)	    |TP.DK.EUR.A.YTL|	DAILY	      |1999-01-04	|2022-08-01|
-|(EUR) Euro (Selling)	    |TP.DK.EUR.S.YTL|	DAILY	      |1999-01-04	|2022-08-01|
+|(USD) US Dollar (Buying)	|TP.DK.USD.A.YTL|	DAILY	      |1950-01-02	|2026-03-02|
+|(USD) US Dollar (Selling)	|TP.DK.USD.S.YTL|	DAILY	      |1950-01-02	|2026-03-02|
+|(EUR) Euro (Buying)	    |TP.DK.EUR.A.YTL|	DAILY	      |1999-01-04	|2026-03-02|
+|(EUR) Euro (Selling)	    |TP.DK.EUR.S.YTL|	DAILY	      |1999-01-04	|2026-03-02|
 
 > Note: above table includes more rows but is truncated for data to be fitted the screen.
 
@@ -490,17 +494,17 @@ data belong to groups can be retrieved with the flag `verbose`.
 
 ```python
 # as dictionary
-groups_dict = connector.get_groups("bie_gsyhgycf", as_dict=True)
+groups_dict = connector.get_groups("bie_dkdovytl", as_dict=True)
 
 # as JSON
-groups_raw = connector.get_groups("bie_gsyhgycf", raw=True)
+groups_raw = connector.get_groups("bie_dkdovytl", raw=True)
 
 # a more detailed version of groups data can be requested with 'verbose' flag.
-detailed_groups = connector.get_groups("bie_gsyhgycf", verbose=True)
+detailed_groups = connector.get_groups("bie_dkdovytl", verbose=True)
 
 # groups can also be requested as a detailed dict supplying both 'verbose' and 'as_dict' flags
 # together.
-detailed_dict = connector.get_groups("bie_gsyhgycf", as_dict=True, verbose=True)
+detailed_dict = connector.get_groups("bie_dkdovytl", as_dict=True, verbose=True)
 ```
 
 
@@ -1348,7 +1352,7 @@ Given data have been written on g:\My Drive\Dev\Active\evdsts\data_2022_07_19_21
 Likewise,
 
 ```python
-sub_categories_df = connector.get_sub_categories("EXCHANGE RATES")
+sub_categories_df = connector.get_sub_categories("CENTRAL BANK EXCHANGE RATES")
 connector.to_file(data=sub_categories_df, data_format='json')
 
 ```

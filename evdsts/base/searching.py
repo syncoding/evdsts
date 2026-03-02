@@ -312,7 +312,7 @@ class SearchEngine:
     def where(
         self,
         keyword: str,
-        n: int = 5,
+        n: int = 100,
         verbose: bool = True,
     ) -> dict[str, str]:
         """Searches given words to determine related series identifications on EVDS API service.
@@ -320,7 +320,7 @@ class SearchEngine:
         Args:
             - keyword (str): words to be searched (for instance: consumer price index)
             - verbose (bool, optional): Shows the results on screen if True. Defaults to True.
-            - n (int, optional): Number of maxiumum related results to be returned . Defaults to 5.
+            - n (int, optional): Number of maxiumum related results to be returned. Defaults to 100.
 
         Raises:
             - ValueError: if there is no keyword provided to search.

@@ -1965,7 +1965,7 @@ class Connector:
         Args:
             - keyword (str): words to be searched (for instance: consumer price index)
             - verbose (bool, optional): Shows the results on screen if True. Defaults to True.
-            - n (int, optional): Number of maxiumum related results to be returned . Defaults to 50.
+            - n (int, optional): Number of maxiumum related results to be returned. Defaults to 100.
 
         Raises:
             - ValueError: if there is no keyword provided to search.
